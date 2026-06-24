@@ -22,7 +22,13 @@ app.get("/", (req, res) => {
 
 });
 
-app.get("/calendar", (req, res) => {
+/*app.get("/calendar", (req, res) => {
+  res.render("calendar/index", {
+    title: "Calendar",
+    activePage: "calendar",
+  });
+});*/
+app.get("/app.js/calendar", (req, res) => {
   res.render("calendar/index", {
     title: "Calendar",
     activePage: "calendar",
