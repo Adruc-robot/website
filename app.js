@@ -1,3 +1,7 @@
+console.log("APP FILE:", __filename);
+console.log("WORKING DIR:", process.cwd());
+console.log("MODULE PATHS:", module.paths);
+
 const express = require("express");
 const path = require("path");
 
@@ -9,15 +13,12 @@ app.set("views", path.join(__dirname, "views"));
 
 app.use(express.static(path.join(__dirname, "public")));
 
-/*app.get("/", (req, res) => {
+app.get("/", (req, res) => {
   res.render("home/index", {
     title: "Home",
     activePage: "home",
   });
 
-});*/
-app.get("/", (req, res) => {
-  res.send("Express root route is working.");
 });
 
 app.get("/calendar", (req, res) => {
