@@ -29,10 +29,11 @@ app.get("/", (req, res) => {
   });
 });*/
 app.get("/app.js/calendar", (req, res) => {
-  res.render("calendar/index", {
+  /*res.render("calendar/index", {
     title: "Calendar",
     activePage: "calendar",
-  });
+    });*/
+    res.send("Calendar Route Works");
 });
 
 app.listen(port, () => {
