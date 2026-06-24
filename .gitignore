@@ -7,3 +7,10 @@ data/
 
 .DS_Store
 Thumbs.db 
+legacy-backup/
+backup/
+wwwroot-backup/
+*.zip
+*.tar
+*.gz
+*.7z
