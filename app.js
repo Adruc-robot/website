@@ -1,7 +1,3 @@
-console.log("APP FILE:", __filename);
-console.log("WORKING DIR:", process.cwd());
-console.log("MODULE PATHS:", module.paths);
-
 const express = require("express");
 const path = require("path");
 

@@ -83,3 +83,15 @@ body {
   color: #aaa;
   background: rgba(0, 0, 0, 0.65);
 }
+
+.site-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.site-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
