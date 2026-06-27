@@ -95,3 +95,16 @@ body {
   flex-wrap: wrap;
   gap: 1rem;
 }
+
+a {
+  color: #8fb7ff;
+}
+
+a:visited {
+  color: #b8a7ff;
+}
+
+a:hover,
+a:focus {
+  color: #d6e4ff;
+}
