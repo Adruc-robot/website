@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="256" viewBox="0 0 512 256" role="img" aria-label="Open electrical switch logo mark">
+  <title>Open Switch Logo Mark</title>
+  <g fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round">
+    <!-- left lead -->
+    <line x1="56" y1="128" x2="148" y2="128" stroke-width="12"/>
+
+    <!-- oversized pivot terminal -->
+    <circle cx="176" cy="128" r="26" stroke-width="12"/>
+
+    <!-- open switch blade, about 28 degrees -->
+    <line x1="198" y1="116" x2="322" y2="50" stroke-width="12"/>
+
+    <!-- rounded receiving contact / terminal -->
+    <rect x="334" y="106" width="56" height="44" rx="22" ry="22" stroke-width="12"/>
+
+    <!-- right lead -->
+    <line x1="390" y1="128" x2="456" y2="128" stroke-width="12"/>
+  </g>
+</svg>

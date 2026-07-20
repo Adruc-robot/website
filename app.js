@@ -1,8 +1,10 @@
+require("dotenv").config();
 const express = require("express");
 const path = require("path");
-
 const app = express();
 const port = process.env.PORT || 3000;
+
+const session = require("express-session");
 
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
@@ -10,12 +12,34 @@ app.set("views", path.join(__dirname, "views"));
 app.use("/public", express.static(path.join(__dirname, "public")));
 app.use(express.urlencoded({ extended: true }));
 
+//Authentication
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false
+}));
+
+app.use((req, res, next) => {
+    res.locals.currentUser = req.session.user || null;
+    next();
+});
+
+
+
+
 app.get("/", (req, res) => {
   res.render("home/index", {
     title: "Home",
     activePage: "home",
   });
 
+});
+
+app.get("/admin", (req, res) => {
+  res.render("admin/index", {
+    title: "Admin",
+    activePage: "admin",
+  });
 });
 
 app.get("/calendar", (req, res) => {

@@ -1,5 +1,8 @@
 <script src="/public/js/vendor/simple-datatables.js"></script>
 <script src="/public/js/site.js"></script>
 <footer class="site-footer">
-  <p>&copy; <%= new Date().getFullYear() %> DGCurda</p>
+    <div class="footer-copyright">&copy; <%= new Date().getFullYear() %> DGCurda
+      <a href="/admin" class="icon-link" aria-label="Admin"><img src="/public/images/<%= currentUser ? 'switch_closed.svg' : 'switch_open.svg' %>" alt=""></a></div>
+    
+  </div>
 </footer>

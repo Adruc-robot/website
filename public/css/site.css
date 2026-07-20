@@ -83,6 +83,12 @@ body {
   color: #aaa;
   background: rgba(0, 0, 0, 0.65);
 }
+.footer-copyright{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
 
 .site-header {
   display: flex;
@@ -107,4 +113,10 @@ a:visited {
 a:hover,
 a:focus {
   color: #d6e4ff;
+}
+
+
+.icon-link img {
+  width: clamp(28px, 2vw, 40px);
+  height: auto;
 }
