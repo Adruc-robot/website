@@ -119,4 +119,10 @@ a:focus {
 .icon-link img {
   width: clamp(28px, 2vw, 40px);
   height: auto;
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
+}
+
+.icon-link:hover img {
+    opacity: 1;
 }

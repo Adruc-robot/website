@@ -5,7 +5,7 @@
   <section class="login-panel">
     <h1>Login</h1>
 
-    <% if (error) { %>
+    <% if (typeof error !== "undefined" && error) { %>
       <div class="form-error" role="alert">
         <%= error %>
       </div>

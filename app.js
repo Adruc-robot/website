@@ -12,6 +12,10 @@ app.set("views", path.join(__dirname, "views"));
 app.use("/public", express.static(path.join(__dirname, "public")));
 app.use(express.urlencoded({ extended: true }));
 
+//Routes requires
+const authRoutes = require("./routes/auth");
+
+
 //Authentication
 app.use(session({
   secret: process.env.SESSION_SECRET,
@@ -35,12 +39,14 @@ app.get("/", (req, res) => {
 
 });
 
-app.get("/admin", (req, res) => {
-  res.render("admin/index", {
-    title: "Admin",
-    activePage: "admin",
-  });
-});
+app.use("/login", authRoutes);
+
+// app.get("/admin", (req, res) => {
+//   res.render("admin/index", {
+//     title: "Admin",
+//     activePage: "admin",
+//   });
+// });
 
 app.get("/calendar", (req, res) => {
   res.render("calendar/index", {
