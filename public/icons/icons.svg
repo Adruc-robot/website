@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg">
+
+  <symbol
+      id="switch-open"
+      viewBox="0 0 512 256">
+
+    <g fill="none"
+       stroke="currentColor"
+       stroke-linecap="round"
+       stroke-linejoin="round">
+
+      <line x1="56" y1="128" x2="148" y2="128" stroke-width="12"/>
+
+      <circle cx="176" cy="128" r="26" stroke-width="12"/>
+
+      <line x1="198" y1="116" x2="322" y2="50" stroke-width="12"/>
+
+      <rect x="334" y="106"
+            width="56"
+            height="44"
+            rx="22"
+            ry="22"
+            stroke-width="12"/>
+
+      <line x1="390" y1="128" x2="456" y2="128" stroke-width="12"/>
+
+    </g>
+
+  </symbol>
+
+  <symbol
+      id="switch-closed"
+      viewBox="0 0 512 256">
+
+    <g fill="none"
+       stroke="currentColor"
+       stroke-linecap="round"
+       stroke-linejoin="round">
+
+      <line x1="56" y1="128" x2="148" y2="128" stroke-width="12"/>
+
+      <circle cx="176" cy="128" r="26" stroke-width="12"/>
+
+      <line x1="202" y1="128" x2="334" y2="128" stroke-width="12"/>
+
+      <rect x="334" y="106"
+            width="56"
+            height="44"
+            rx="22"
+            ry="22"
+            stroke-width="12"/>
+
+      <line x1="390" y1="128" x2="456" y2="128" stroke-width="12"/>
+
+    </g>
+
+  </symbol>
+
+  <symbol
+      id="stylus"
+      viewBox="0 0 512 256">
+    <g fill="none"
+      stroke="currentColor"
+      stroke-width="12"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      transform="rotate(-45 256 128)">
+
+      <!-- Main stylus body -->
+      <path d="M128 98
+              H374
+              Q394 98 394 118
+              V138
+              Q394 158 374 158
+              H128
+              Z"/>
+
+      <!-- Writing tip -->
+      <path d="M128 98
+              L84 128
+              L128 158
+              Z"/>
+
+      <!-- Small nib -->
+      <path d="M84 128 L103 116 L103 140 Z"/>
+
+      <!-- Rear cap -->
+      <path d="M358 98 V158"/>
+
+      <!-- Side button -->
+      <rect x="292" y="113" width="44" height="30" rx="15" ry="15"/>
+    </g>
+
+  </symbol>
+
+</svg>

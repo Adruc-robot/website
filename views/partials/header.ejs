@@ -6,6 +6,9 @@
     <a class="<%= activePage === 'calendar' ? 'active' : '' %>" href="/calendar">Calendar</a>
     <a href="#">Photography</a>
     <a href="#">Projects</a>
+    <% if (currentUser) { %>
+      <a class="<%= activePage === 'locations' ? 'active' : '' %>" href="/locations">Locations</a>
+    <% } %>
     <a href="#">About</a>
   </nav>
 </header>

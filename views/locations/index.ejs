@@ -22,7 +22,7 @@
               <th>Description</th>
               <th>Latitude</th>
               <th>Longitude</th>
-              <th></th>
+              <th>Edit</th>
             </tr>
           </thead>
           <tbody>
@@ -32,7 +32,17 @@
                 <td><%= location.description || "" %></td>
                 <td><%= location.latitude || "" %></td>
                 <td><%= location.longitude || "" %></td>
-                <td><a href="/locations/<%= location.id %>/edit">Edit</a></td>
+                  <td>
+                    <% if (currentUser) { %>
+                      <a href="/locations/<%= location.id %>/edit" class="icon-link" aria-label="edit">
+                        <svg class="icon">
+                          <use href="/public/icons/icons.svg#stylus"></use>
+                        </svg>
+                      </a>
+                    <% } else { %>
+                      N/A
+                    <% } %>
+                </td>
               </tr>
             <% }) %>
           </tbody>

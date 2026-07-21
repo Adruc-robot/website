@@ -2,7 +2,12 @@
 <script src="/public/js/site.js"></script>
 <footer class="site-footer">
     <div class="footer-copyright">&copy; <%= new Date().getFullYear() %> DGCurda
-      <a href="/login" class="icon-link" aria-label="login"><img src="/public/images/<%= currentUser ? 'switch_closed.svg' : 'switch_open.svg' %>" alt=""></a></div>
+      <a href="/login" class="icon-link" aria-label="login">
+        <svg class="icon">
+          <use href="/public/icons/icons.svg#<%= currentUser ? 'switch-closed' : 'switch-open' %>"></use>
+        </svg>
+      </a>
+    </div>
     <!--<a class="<%= activePage === 'calendar' ? 'active' : '' %>" href="/calendar">Calendar</a>-->
   </div>
 </footer>

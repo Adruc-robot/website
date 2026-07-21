@@ -115,14 +115,15 @@ a:focus {
   color: #d6e4ff;
 }
 
-
-.icon-link img {
-  width: clamp(28px, 2vw, 40px);
-  height: auto;
-  opacity: 0.5;
-  transition: opacity 0.2s ease;
+.icon {
+    width: clamp(28px, 3vw, 36px);
+    aspect-ratio: 2 / 1;
+    height: auto;
+    color: #888;      /* currentColor uses this */
+    opacity: 0.5;
+    transition: opacity 0.2s;
 }
 
-.icon-link:hover img {
+.icon-link:hover .icon {
     opacity: 1;
 }
