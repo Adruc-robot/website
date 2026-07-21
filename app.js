@@ -6,6 +6,8 @@ const port = process.env.PORT || 3000;
 
 const session = require("express-session");
 
+const bootstrapAdmin = require("./services/bootstrapAdmin");
+
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
@@ -14,7 +16,6 @@ app.use(express.urlencoded({ extended: true }));
 
 //Routes requires
 const authRoutes = require("./routes/auth");
-
 
 //Authentication
 app.use(session({
@@ -40,13 +41,6 @@ app.get("/", (req, res) => {
 });
 
 app.use("/login", authRoutes);
-
-// app.get("/admin", (req, res) => {
-//   res.render("admin/index", {
-//     title: "Admin",
-//     activePage: "admin",
-//   });
-// });
 
 app.get("/calendar", (req, res) => {
   res.render("calendar/index", {
@@ -97,9 +91,23 @@ app.post("/locations/:id", async (req, res) => {
   res.redirect("/locations");
 });
 
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
-});
+// app.listen(port, () => {
+//   console.log(`Server running on port ${port}`);
+// });
+async function initializeApplication() {
+    try {
+        await bootstrapAdmin();
+
+        app.listen(port, () => {
+            console.log(`Server running on port ${port}`);
+        });
+    } catch (error) {
+        console.error("Application startup failed:", error);
+        process.exit(1);
+    }
+}
+
+initializeApplication();
 
 //Connection test
 const db = require("./services/db");
@@ -107,7 +115,6 @@ const db = require("./services/db");
 (async () => {
   try {
     const [rows] = await db.query("SELECT VERSION() AS version");
-    console.log("Up in app.js prior to logging rows.")
     console.log(rows);
   } catch (err) {
     console.error(err);
