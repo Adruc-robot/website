@@ -15,7 +15,9 @@ app.use("/public", express.static(path.join(__dirname, "public")));
 app.use(express.urlencoded({ extended: true }));
 
 //Routes requires
+const homeRoutes = require("./routes/home");
 const authRoutes = require("./routes/auth");
+const locationsRoutes = require("./routes/locations");
 
 //Authentication
 app.use(session({
@@ -29,18 +31,9 @@ app.use((req, res, next) => {
     next();
 });
 
-
-
-
-app.get("/", (req, res) => {
-  res.render("home/index", {
-    title: "Home",
-    activePage: "home",
-  });
-
-});
-
+app.use("/", homeRoutes);
 app.use("/login", authRoutes);
+app.use("/locations", locationsRoutes);
 
 app.get("/calendar", (req, res) => {
   res.render("calendar/index", {
@@ -49,53 +42,7 @@ app.get("/calendar", (req, res) => {
   });
 });
 
-const Location = require("./models/location");
 
-app.get("/locations", async (req, res) => {
-  const locations = await Location.all();
-
-  res.render("locations/index", {
-    title: "Locations",
-    activePage: "locations",
-    locations,
-  });
-});
-
-app.get("/locations/new", (req, res) => {
-  res.render("locations/form", {
-    title: "New Location",
-    activePage: "locations",
-    location: {
-      active: 1,
-    },
-    action: "/locations",
-  });
-});
-
-app.post("/locations", async (req, res) => {
-  await Location.create(req.body);
-  res.redirect("/locations");
-});
-
-app.get("/locations/:id/edit", async (req, res) => {
-  const location = await Location.find(req.params.id);
-
-  res.render("locations/form", {
-    title: "Edit Location",
-    activePage: "locations",
-    location,
-    action: `/locations/${location.id}`,
-  });
-});
-
-app.post("/locations/:id", async (req, res) => {
-  await Location.update(req.params.id, req.body);
-  res.redirect("/locations");
-});
-
-// app.listen(port, () => {
-//   console.log(`Server running on port ${port}`);
-// });
 async function initializeApplication() {
     try {
         await bootstrapAdmin();
