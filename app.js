@@ -65,7 +65,9 @@ app.get("/locations/new", (req, res) => {
   res.render("locations/form", {
     title: "New Location",
     activePage: "locations",
-    location: {},
+    location: {
+      active: 1,
+    },
     action: "/locations",
   });
 });

@@ -9,8 +9,9 @@
   <main class="page">
     <section class="page-card">
       <h1>Locations</h1>
-
-      <p><a href="/locations/new">Add Location</a></p>
+      <% if (currentUser) { %>
+        <p><a href="/locations/new">Add Location</a></p>
+      <% } %>
 
       <% if (locations.length === 0) { %>
         <p>No locations yet.</p>
@@ -20,6 +21,7 @@
             <tr>
               <th>Name</th>
               <th>Description</th>
+              <th>Active</th>
               <th>Latitude</th>
               <th>Longitude</th>
               <th>Edit</th>
@@ -30,6 +32,7 @@
               <tr>
                 <td><%= location.name %></td>
                 <td><%= location.description || "" %></td>
+                <td><%= location.active === 1 ? "Active" : "Inactive" %></td>
                 <td><%= location.latitude || "" %></td>
                 <td><%= location.longitude || "" %></td>
                   <td>

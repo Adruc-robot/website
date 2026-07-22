@@ -24,7 +24,17 @@
             <textarea name="description"><%= location.description || "" %></textarea>
           </label>
         </p>
-
+        
+        <p>
+          <label>
+            Active<br>
+            <select name="active">
+              <option value="1" <%= location.active === 1 ? "selected" : "" %>>Active</option>
+              <option value="0" <%= location.active === 0 ? "selected" : "" %>>Inactive</option>
+            </select>
+          </label>
+        </p>
+        
         <p>
           <label>
             Latitude<br>

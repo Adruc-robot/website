@@ -2,7 +2,7 @@ const db = require("../services/db");
 
 async function all() {
   const [rows] = await db.query(`
-    SELECT id, name, description, latitude, longitude, created_at, updated_at
+    SELECT id, name, description, active, latitude, longitude, created_at, updated_at
     FROM locations
     ORDER BY name
   `);
@@ -13,7 +13,7 @@ async function all() {
 async function find(id) {
   const [rows] = await db.query(
     `
-    SELECT id, name, description, latitude, longitude, created_at, updated_at
+    SELECT id, name, description, active, latitude, longitude, created_at, updated_at
     FROM locations
     WHERE id = ?
     `,
@@ -26,12 +26,13 @@ async function find(id) {
 async function create(location) {
   const [result] = await db.query(
     `
-    INSERT INTO locations (name, description, latitude, longitude)
-    VALUES (?, ?, ?, ?)
+    INSERT INTO locations (name, description, active, latitude, longitude)
+    VALUES (?, ?, ?, ?, ?)
     `,
     [
       location.name,
       location.description || null,
+      location.active,
       location.latitude || null,
       location.longitude || null,
     ]
@@ -46,6 +47,7 @@ async function update(id, location) {
     UPDATE locations
     SET name = ?,
         description = ?,
+        active = ?,
         latitude = ?,
         longitude = ?
     WHERE id = ?
@@ -53,6 +55,7 @@ async function update(id, location) {
     [
       location.name,
       location.description || null,
+      location.active,
       location.latitude || null,
       location.longitude || null,
       id,
