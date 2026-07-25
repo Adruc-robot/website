@@ -65,9 +65,27 @@ async function update(id, location) {
   return find(id);
 }
 
+//
+// find by name
+//
+async function findByName(name) {
+  const [rows] = await db.query(
+    `
+      SELECT *
+      FROM locations
+      WHERE name = ?
+      LIMIT 1
+    `,
+    [name]
+  );
+
+  return rows[0] || null;
+}
+
 module.exports = {
   all,
   find,
   create,
   update,
+  findByName,
 };
