@@ -8,39 +8,36 @@
 
   <main class="page">
     <section class="page-card">
-      <h1>Path</h1>
-      <!--Protection for add-->
+      <h1>Locations</h1>
       <% if (currentUser) { %>
-        <p><a href="/path/new">Add Path</a></p>
+        <p><a href="/locations/new">Add Location</a></p>
       <% } %>
 
-      <% if (paths.length === 0) { %>
-        <p>No paths yet.</p>
+      <% if (locations.length === 0) { %>
+        <p>No locations yet.</p>
       <% } else { %>
         <table class="datatable">
           <thead>
             <tr>
-              <th>Column 1</th>
-              <th>Column 2</th>
-              <th>Column 3</th>
-              <th>Column 4</th>
-              <th>Column 5</th>
-              <th>Column 6</th>
+              <th>Name</th>
+              <th>Description</th>
+              <th>Active</th>
+              <th>Latitude</th>
+              <th>Longitude</th>
+              <th>Edit</th>
             </tr>
           </thead>
           <tbody>
-            <% paths.forEach(path => { %>
+            <% locations.forEach(location => { %>
               <tr>
-                <td><%= path.name %></td>
-                <td><%= path.description || "" %></td>
-                <!--Syntax for boolean-->
-                <td><%= path.active === 1 ? "Active" : "Inactive" %></td>
-                <td><%= path.latitude || "" %></td>
-                <td><%= path.longitude || "" %></td>
+                <td><%= location.name %></td>
+                <td><%= location.description || "" %></td>
+                <td><%= location.active === 1 ? "Active" : "Inactive" %></td>
+                <td><%= location.latitude || "" %></td>
+                <td><%= location.longitude || "" %></td>
                   <td>
-                    <!--protection for a edit-->
                     <% if (currentUser) { %>
-                      <a href="/pathss/<%= path.id %>/edit" class="icon-link" aria-label="edit">
+                      <a href="/locations/<%= location.id %>/edit" class="icon-link" aria-label="edit">
                         <svg class="icon">
                           <use href="/public/icons/icons.svg#stylus"></use>
                         </svg>
