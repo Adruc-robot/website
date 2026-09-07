@@ -14,6 +14,21 @@
             "group": "Dev",
             "username": "website_dev",
             "database": "website_dev"
+        },
+        {
+            "mysqlOptions": {
+                "authProtocol": "default",
+                "enableSsl": "Disabled"
+            },
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 3306,
+            "driver": "MariaDB",
+            "name": "09072026_Dev_con",
+            "database": "website",
+            "username": "adruc_ghost",
+            "askForPassword": true
         }
     ]
 }

@@ -4,7 +4,7 @@ const Image = require("../models/image");
 const Location = require("../models/location");
 
 const { determineCapturedAt } = require("../helpers/timestamp");
-
+const fileHash = await calculateFileHash(imagePath);
 //
 // Read optional JSON metadata
 //
@@ -68,6 +68,7 @@ async function importCapture(imagePath, jsonPath = null) {
     location_id: location.id,
     captured_at: capturedAt,
     original_path: imagePath,
+    file_hash: fileHash,
     web_path: null,
     thumbnail_path: null,
     processing_status: "pending",
@@ -75,7 +76,7 @@ async function importCapture(imagePath, jsonPath = null) {
 
   const telemetry = {
     scene: metadata.scene ?? null,
-    exposure_us: metadata.camera?.current?.exposure_us ?? null,
+    exposure_us: metadata.camera?.current?.exposure ?? null,
     gain: metadata.camera?.current?.gain ?? null,
     effective_exposure:
       metadata.camera?.current?.effective_exposure ?? null,
@@ -89,7 +90,20 @@ async function importCapture(imagePath, jsonPath = null) {
     metadata_json: metadata,
   };
 
-  return Image.createWithTelemetry(image, telemetry);
+  const existing = await Image.findByFileHash(fileHash);
+
+  if (existing) {
+      await Image.updateWithTelemetry(
+      existing.id,
+      image,
+      telemetry
+    );
+    
+    return existing.id;
+  } 
+  
+  return Image.createWithTelemetry(image, telemetry); 
+  
 }
 
 //module.exports = importCapture;
