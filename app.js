@@ -4,6 +4,8 @@ const path = require("path");
 const app = express();
 const port = process.env.PORT || 3000;
 
+const captureApiRouter = require("./routes/api/captures");
+
 const session = require("express-session");
 
 const bootstrapAdmin = require("./services/bootstrapAdmin");
@@ -42,6 +44,7 @@ app.get("/calendar", (req, res) => {
   });
 });
 
+app.use("/api/captures", captureApiRouter);
 
 async function initializeApplication() {
     try {
