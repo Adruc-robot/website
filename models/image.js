@@ -294,4 +294,5 @@ module.exports = {
   updateProcessingResult,
   updateOriginalPath,
   findByFileHash,
+  calculateFileHash,
 };

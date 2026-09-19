@@ -4,9 +4,12 @@ const path = require("node:path");
 const fs = require("node:fs");
 const { 
   deleteUploadedFile,
-  isValidJson 
-} = require("../../helpers/fileValidation");
-
+  isValidJson,
+  moveUploadedFile,
+  fileExists,
+  calculateFileHash,
+  findAvailableBaseName
+} = require("../../helpers/captureUpload");
 
 const router = express.Router();
 
@@ -17,14 +20,25 @@ const incomingDir = path.join(
   "storage",
   "incoming"
 );
+const tempDir = path.join(
+  __dirname,
+  "..",
+  "..",
+  "storage",
+  "temp"
+);
 
 fs.mkdirSync(incomingDir, {
   recursive: true,
 });
 
+fs.mkdirSync(tempDir, {
+  recursive: true,
+});
+
 const storage = multer.diskStorage({
   destination: function (req, file, callback) {
-    callback(null, incomingDir);
+    callback(null, tempDir);
   },
 
   filename: function (req, file, callback) {
@@ -148,12 +162,51 @@ router.post(
           });
         }
       }
+      // Set these variables up so they are available below if needed.
+      let storedImageFilename = image.filename;
+      let storedMetadataFilename = metadata?.filename ?? null;
 
+      //file collision
+      const incomingImagePath = path.join(incomingDir, image.filename);
+
+      if (await fileExists(incomingImagePath)) {
+ 
+        const uploadedFileHash = await calculateFileHash(image.path);
+
+        const existingFileHash = await calculateFileHash(incomingImagePath);
+
+        if (uploadedFileHash === existingFileHash) {
+          // Same exact image - delete this 
+          await deleteUploadedFile(image);
+          await deleteUploadedFile(metadata);
+
+          return res.status(200).json({
+            message: "Capture already uploaded",
+            image: image.filename
+          });
+        } else {
+          // Different images with the same filename
+          const newBaseName = await findAvailableBaseName(incomingDir, image.filename);
+          const imageExtension = path.extname(image.filename); 
+          storedImageFilename = `${newBaseName}${imageExtension}`;
+          storedMetadataFilename = metadata? `${newBaseName}.json`: null;
+          await moveUploadedFile(image, incomingDir, storedImageFilename);
+
+          if (metadata) {
+            await moveUploadedFile(metadata, incomingDir, storedMetadataFilename);
+          }
+        }
+      } else {
+        // just move the file
+        await moveUploadedFile(image, incomingDir)
+        if (metadata) {
+          await moveUploadedFile(metadata, incomingDir)
+        }
+      }   
       return res.status(201).json({
         message: "Capture uploaded",
-        image: image.filename,
-        metadata:
-          metadata?.filename ?? null,
+        image: storedImageFilename,
+        metadata: storedMetadataFilename
       });
     } catch (error) {
       console.error(

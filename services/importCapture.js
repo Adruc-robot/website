@@ -4,6 +4,7 @@ const Image = require("../models/image");
 const Location = require("../models/location");
 
 const { determineCapturedAt } = require("../helpers/timestamp");
+const { calculateFileHash } = require("../helpers/captureUpload");
 const fileHash = await calculateFileHash(imagePath);
 //
 // Read optional JSON metadata
