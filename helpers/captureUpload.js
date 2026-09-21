@@ -18,16 +18,19 @@ async function moveUploadedFile(file, destinationDir, newDestinationFileName = n
   return destinationPath;
 }
 
-async function deleteUploadedFile(file) {
-  if (!file?.path) {
+async function deleteFile(filePath) {
+  if (!filePath) {
     return;
   }
 
   try {
-    await fsPromises.unlink(file.path);
+    await fsPromises.unlink(filePath);
   } catch (error) {
+    if (error.code === "ENOENT") {
+      return;
+    }
     console.error(
-      `Failed to delete uploaded file: ${file.path}`,
+      `Failed to delete file: ${filePath}`,
       error
     );
   }
@@ -101,7 +104,7 @@ async function findAvailableBaseName(
 }
 
 module.exports = {
-    deleteUploadedFile,
+    deleteFile,
     isValidJson,
     moveUploadedFile,
     fileExists,

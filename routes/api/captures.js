@@ -3,7 +3,7 @@ const multer = require("multer");
 const path = require("node:path");
 const fs = require("node:fs");
 const { 
-  deleteUploadedFile,
+  deleteFile,
   isValidJson,
   moveUploadedFile,
   fileExists,
@@ -122,12 +122,12 @@ router.post(
   ]),
 
   async (req, res) => {
+    // declare outside of the try so these are available in the catch
+    const image = req.files?.image?.[0];
+    const metadata = req.files?.metadata?.[0] ?? null;
+    let movedImagePath = null;
+    let movedMetadataPath = null;
     try {
-      const image =
-        req.files?.image?.[0];
-
-      const metadata =
-        req.files?.metadata?.[0] ?? null;
 
       if (!image) {
         return res.status(400).json({
@@ -143,8 +143,8 @@ router.post(
             path.parse(metadata.originalname).name;
 
         if (imageBaseName !== metadataBaseName) {
-            await deleteUploadedFile(image);
-            await deleteUploadedFile(metadata);
+            await deleteFile(image?.path);
+            await deleteFile(metadata?.path);
 
             return res.status(400).json({
             error: "Image and metadata filenames do not match",
@@ -154,8 +154,8 @@ router.post(
         const validJson = await isValidJson(metadata.path);
 
         if (!validJson) {
-          await deleteUploadedFile(image);
-          await deleteUploadedFile(metadata);
+          await deleteFile(image?.path);
+          await deleteFile(metadata?.path);
 
           return res.status(400).json({
             error: "Metadata file contains invalid JSON",
@@ -177,8 +177,8 @@ router.post(
 
         if (uploadedFileHash === existingFileHash) {
           // Same exact image - delete this 
-          await deleteUploadedFile(image);
-          await deleteUploadedFile(metadata);
+          await deleteFile(image?.path);
+          await deleteFile(metadata?.path);
 
           return res.status(200).json({
             message: "Capture already uploaded",
@@ -190,17 +190,21 @@ router.post(
           const imageExtension = path.extname(image.filename); 
           storedImageFilename = `${newBaseName}${imageExtension}`;
           storedMetadataFilename = metadata? `${newBaseName}.json`: null;
-          await moveUploadedFile(image, incomingDir, storedImageFilename);
+          movedImagePath = await moveUploadedFile(image, incomingDir, storedImageFilename);
 
           if (metadata) {
-            await moveUploadedFile(metadata, incomingDir, storedMetadataFilename);
+            movedMetadataPath = await moveUploadedFile(metadata, incomingDir, storedMetadataFilename);
           }
         }
       } else {
         // just move the file
-        await moveUploadedFile(image, incomingDir)
+        movedImagePath = await moveUploadedFile(image, incomingDir)
+
+        //temporary
+         throw new Error("TEST: forced failure after image move");
+
         if (metadata) {
-          await moveUploadedFile(metadata, incomingDir)
+          movedMetadataPath = await moveUploadedFile(metadata, incomingDir)
         }
       }   
       return res.status(201).json({
@@ -209,6 +213,14 @@ router.post(
         metadata: storedMetadataFilename
       });
     } catch (error) {
+      // Clean up anything still in temp
+      await deleteFile(image?.path);
+      await deleteFile(metadata?.path);
+
+      // Roll back anything this request moved to incoming
+      await deleteFile(movedImagePath);
+      await deleteFile(movedMetadataPath);
+
       console.error(
         "Capture upload failed:",
         error
