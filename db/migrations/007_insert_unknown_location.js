@@ -4,18 +4,19 @@ module.exports = {
   async up(db) {
     await db.query(`
       INSERT INTO locations (
-        name,
-        description,
-        active
+          name,
+          description,
+          active
       )
       SELECT
-        'Unknown',
-        'Used when location unknown',
-        TRUE
+          'Unknown',
+          'Used when location unknown',
+          TRUE
+      FROM DUAL
       WHERE NOT EXISTS (
-        SELECT 1
-        FROM locations
-        WHERE name = 'Unknown'
+          SELECT 1
+          FROM locations
+          WHERE name = 'Unknown'
       );
     `);
   },
