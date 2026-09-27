@@ -200,9 +200,6 @@ router.post(
         // just move the file
         movedImagePath = await moveUploadedFile(image, incomingDir)
 
-        //temporary
-         throw new Error("TEST: forced failure after image move");
-
         if (metadata) {
           movedMetadataPath = await moveUploadedFile(metadata, incomingDir)
         }
