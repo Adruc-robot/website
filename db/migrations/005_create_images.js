@@ -19,7 +19,6 @@ module.exports = {
           location_id,
           captured_at
         ),
-        UNIQUE KEY uq_images_original_path (original_path),
 
         CONSTRAINT fk_images_location
             FOREIGN KEY (location_id)
