@@ -23,15 +23,18 @@ async function moveFile(sourcePath, destinationDir) {
 
   return destinationPath;
 }
-
+//TEMPORARY START
+const BATCH_SIZE = 100;
+//TEMPORARY END
 async function processIncoming() {
   const files = await fs.readdir(incomingDir);
 
   const images = files.filter(file =>
     file.toLowerCase().endsWith(".jpg")
-  );
+  )
+  .sort();
   //TEMPORARY START
-  const imagesToProcess = images.slice(0, 5);
+  const imagesToProcess = images.slice(0, BATCH_SIZE);
 
   for (const image of imagesToProcess) {
   //TEMPORARY END
