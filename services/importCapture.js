@@ -5,7 +5,7 @@ const Location = require("../models/location");
 
 const { determineCapturedAt } = require("../helpers/timestamp");
 const { calculateFileHash } = require("../helpers/captureUpload");
-const fileHash = await calculateFileHash(imagePath);
+
 //
 // Read optional JSON metadata
 //
@@ -39,6 +39,8 @@ async function importCapture(imagePath, jsonPath = null) {
   if (!imagePath) {
     throw new Error("An image path is required");
   }
+
+  const fileHash = await calculateFileHash(imagePath);
 
   const metadata = await readMetadata(jsonPath);
 

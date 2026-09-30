@@ -30,8 +30,12 @@ async function processIncoming() {
   const images = files.filter(file =>
     file.toLowerCase().endsWith(".jpg")
   );
+  //TEMPORARY START
+  const imagesToProcess = images.slice(0, 5);
 
-  for (const image of images) {
+  for (const image of imagesToProcess) {
+  //TEMPORARY END
+  //for (const image of images) {
     const imagePath = path.join(incomingDir, image);
 
     const jsonName = path.parse(image).name + ".json";
