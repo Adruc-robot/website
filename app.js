@@ -5,6 +5,7 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 const captureApiRouter = require("./routes/api/captures");
+const timelapseApiRouter = require("./routes/api/timelapse");
 
 const session = require("express-session");
 
@@ -14,6 +15,17 @@ app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
 app.use("/public", express.static(path.join(__dirname, "public")));
+
+app.use(
+  "/timelapse/web",
+  express.static(path.join(__dirname, "storage", "web"))
+);
+
+app.use(
+  "/timelapse/thumbs",
+  express.static(path.join(__dirname, "storage", "thumbs"))
+);
+
 app.use(express.urlencoded({ extended: true }));
 
 //Routes requires
@@ -45,6 +57,8 @@ app.get("/calendar", (req, res) => {
 });
 
 app.use("/api/captures", captureApiRouter);
+
+app.use("/api/timelapse", timelapseApiRouter);
 
 async function initializeApplication() {
     try {

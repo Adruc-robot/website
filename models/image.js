@@ -284,6 +284,86 @@ async function findByFileHash(fileHash) {
   return rows[0] || null;
 }
 
+
+//
+// find by day and location
+//
+async function findCompleteByLocationAndDay(locationId, start, end) {
+  const [rows] = await db.query(`
+    SELECT
+      id,
+      location_id,
+      captured_at,
+      web_path,
+      thumbnail_path
+    FROM images
+    WHERE location_id = ?
+      AND captured_at >= ?
+      AND captured_at < ?
+      AND processing_status = 'complete'
+      AND web_path IS NOT NULL
+      AND thumbnail_path IS NOT NULL
+    ORDER BY captured_at
+  `,
+    [
+      locationId,
+      start,
+      end,
+    ]
+  );
+
+  return rows;
+}
+
+
+//
+// Find one representative image per day for a location.
+// The image closest to noon is used.
+//
+async function findDailyRepresentatives(locationId, start, end) {
+  const [rows] = await db.query(
+    `
+      SELECT
+        id,
+        location_id,
+        captured_at,
+        web_path,
+        thumbnail_path
+      FROM (
+        SELECT
+          i.id,
+          i.location_id,
+          i.captured_at,
+          i.web_path,
+          i.thumbnail_path,
+          ROW_NUMBER() OVER (
+            PARTITION BY DATE(i.captured_at)
+            ORDER BY ABS(
+              TIME_TO_SEC(TIME(i.captured_at)) - TIME_TO_SEC('12:00:00')
+            ),
+            i.captured_at
+          ) AS row_num
+        FROM images i
+        WHERE i.location_id = ?
+          AND i.captured_at >= ?
+          AND i.captured_at < ?
+          AND i.processing_status = 'complete'
+          AND i.web_path IS NOT NULL
+          AND i.thumbnail_path IS NOT NULL
+      ) ranked
+      WHERE row_num = 1
+      ORDER BY captured_at
+    `,
+    [
+      locationId,
+      start,
+      end,
+    ]
+  );
+
+  return rows;
+}
+
 module.exports = {
   all,
   find,
@@ -295,4 +375,6 @@ module.exports = {
   updateOriginalPath,
   findByFileHash,
   calculateFileHash,
+  findCompleteByLocationAndDay,
+  findDailyRepresentatives,
 };
