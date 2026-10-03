@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include("../partials/head") %>
+</head>
+
+<body>
+  <%- include("../partials/header") %>
+
+  <main class="page">
+    <div class="timelapse-header">
+      <div class="timelapse-navigation">
+        <button id="prevBtn" type="button">&larr;</button>
+
+        <h1 id="timelapseTitle">Time-Lapse</h1>
+
+        <button id="nextBtn" type="button">&rarr;</button>
+      </div>
+
+      <div class="timelapse-view-toggle">
+        <button id="monthBtn" type="button">Month</button>
+        <button id="weekBtn" type="button">Week</button>
+        <button id="dayBtn" type="button">Day</button>
+      </div>
+    </div>
+
+    <div id="timelapseStatus"></div>
+    <div id="timelapseViewer"></div>
+    
+  </main>
+  <script src="/public/js/timelapse.js"></script>
+  <%- include("../partials/footer") %>
+</body>
+</html>

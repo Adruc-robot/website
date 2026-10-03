@@ -32,6 +32,7 @@ app.use(express.urlencoded({ extended: true }));
 const homeRoutes = require("./routes/home");
 const authRoutes = require("./routes/auth");
 const locationsRoutes = require("./routes/locations");
+const timelapseRoutes = require("./routes/timelapse");
 
 //Authentication
 app.use(session({
@@ -48,6 +49,7 @@ app.use((req, res, next) => {
 app.use("/", homeRoutes);
 app.use("/login", authRoutes);
 app.use("/locations", locationsRoutes);
+app.use("/timelapse", timelapseRoutes);
 
 app.get("/calendar", (req, res) => {
   res.render("calendar/index", {
