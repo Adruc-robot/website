@@ -368,6 +368,31 @@ function startPlayback() {
     updateFrame();
   }, 500);
 }
+prevBtn.addEventListener("click", () => {
+  monthAnchor.setMonth(monthAnchor.getMonth() - 1);
+
+  renderMonth().catch(error => {
+    console.error(error);
+
+    document.getElementById("timelapseStatus").textContent =
+      "Unable to load time-lapse calendar.";
+  });
+});
+
+nextBtn.addEventListener("click", () => {
+  if (viewingCurrentMonth()) {
+    return;
+  }
+
+  monthAnchor.setMonth(monthAnchor.getMonth() + 1);
+
+  renderMonth().catch(error => {
+    console.error(error);
+
+    document.getElementById("timelapseStatus").textContent =
+      "Unable to load time-lapse calendar.";
+  });
+});
 
 renderMonth().catch(error => {
   console.error(error);
