@@ -6,6 +6,7 @@ const monthBtn = document.getElementById("monthBtn");
 const weekBtn = document.getElementById("weekBtn");
 const dayBtn = document.getElementById("dayBtn");
 
+let currentView = "month";
 let monthAnchor = new Date();
 monthAnchor.setDate(1);
 let selectedDate = null;
@@ -39,7 +40,65 @@ function viewingCurrentMonth() {
   );
 }
 
+function viewingCurrentDay() {
+  return selectedDate === dateString(new Date());
+}
+
+function viewingCurrentWeek() {
+  if (!selectedDate) {
+    return false;
+  }
+
+  const now = new Date();
+
+  const today = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate()
+  );
+
+  const selected = new Date(`${selectedDate}T12:00:00`);
+
+  const currentWeekStart = new Date(today);
+  currentWeekStart.setDate(
+    today.getDate() - today.getDay()
+  );
+
+  const currentWeekEnd = new Date(currentWeekStart);
+  currentWeekEnd.setDate(
+    currentWeekStart.getDate() + 6
+  );
+
+  return (
+    selected >= currentWeekStart &&
+    selected <= currentWeekEnd
+  );
+}
+
+function updateNavigationButtons() {
+  prevBtn.disabled = false;
+
+  if (currentView === "month") {
+    nextBtn.disabled = viewingCurrentMonth();
+    return;
+  }
+
+  if (currentView === "week") {
+    nextBtn.disabled = viewingCurrentWeek();
+    return;
+  }
+
+  if (currentView === "day") {
+    nextBtn.disabled = viewingCurrentDay();
+    return;
+  }
+
+  nextBtn.disabled = false;
+}
+
 async function renderMonth() {
+  currentView = "month";
+
   viewer.innerHTML = "";
   monthBtn.classList.add("active");
   weekBtn.classList.remove("active");
@@ -65,7 +124,7 @@ async function renderMonth() {
   const year = monthAnchor.getFullYear();
   const month = monthAnchor.getMonth();
 
-  nextBtn.disabled = viewingCurrentMonth();
+  updateNavigationButtons();
   title.textContent = monthAnchor.toLocaleString(undefined, {
     month: "long",
     year: "numeric",
@@ -171,11 +230,14 @@ async function renderMonth() {
 }
 
 async function renderDay() {
+  currentView = "day";
   viewer.innerHTML = "";
 
   monthBtn.classList.remove("active");
   weekBtn.classList.remove("active");
   dayBtn.classList.add("active");
+
+  updateNavigationButtons();
 
   title.textContent = selectedDate;
 
@@ -368,8 +430,73 @@ function startPlayback() {
     updateFrame();
   }, 500);
 }
+
 prevBtn.addEventListener("click", () => {
-  monthAnchor.setMonth(monthAnchor.getMonth() - 1);
+  if (currentView === "month") {
+    monthAnchor.setMonth(monthAnchor.getMonth() - 1);
+
+    renderMonth().catch(error => {
+      console.error(error);
+    });
+
+    return;
+  }
+
+  if (currentView === "day") {
+    const date = new Date(`${selectedDate}T12:00:00`);
+    date.setDate(date.getDate() - 1);
+
+    selectedDate = dateString(date);
+
+    renderDay().catch(error => {
+      console.error(error);
+    });
+  }
+});
+
+nextBtn.addEventListener("click", () => {
+  if (currentView === "month") {
+    if (viewingCurrentMonth()) {
+      return;
+    }
+
+    monthAnchor.setMonth(monthAnchor.getMonth() + 1);
+
+    renderMonth().catch(error => {
+      console.error(error);
+    });
+
+    return;
+  }
+
+  if (currentView === "day") {
+    const date = new Date(`${selectedDate}T12:00:00`);
+    date.setDate(date.getDate() + 1);
+
+    selectedDate = dateString(date);
+
+    renderDay().catch(error => {
+      console.error(error);
+    });
+  }
+});
+
+monthBtn.addEventListener("click", () => {
+  if (currentView === "month") {
+    return;
+  }
+
+  // If we came from Day view, show the month containing that day.
+  if (selectedDate) {
+    const date = new Date(`${selectedDate}T12:00:00`);
+
+    monthAnchor = new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      1
+    );
+  }
+
 
   renderMonth().catch(error => {
     console.error(error);
@@ -379,18 +506,20 @@ prevBtn.addEventListener("click", () => {
   });
 });
 
-nextBtn.addEventListener("click", () => {
-  if (viewingCurrentMonth()) {
+dayBtn.addEventListener("click", () => {
+  if (currentView === "day") {
     return;
   }
 
-  monthAnchor.setMonth(monthAnchor.getMonth() + 1);
+  if (!selectedDate) {
+    selectedDate = dateString(new Date());
+  }
 
-  renderMonth().catch(error => {
+  renderDay().catch(error => {
     console.error(error);
 
     document.getElementById("timelapseStatus").textContent =
-      "Unable to load time-lapse calendar.";
+      "Unable to load time-lapse day.";
   });
 });
 
