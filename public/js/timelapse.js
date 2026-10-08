@@ -10,6 +10,7 @@ let currentView = "month";
 let monthAnchor = new Date();
 monthAnchor.setDate(1);
 let selectedDate = null;
+let weekAnchor = null;
 
 let dayImages = [];
 let currentFrame = 0;
@@ -22,6 +23,18 @@ let playerPlayButton = null;
 
 let playbackTimer = null;
 let isPlaying = false;
+
+function startOfWeek(date) {
+  const start = new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate()
+  );
+
+  start.setDate(start.getDate() - start.getDay());
+
+  return start;
+}
 
 function dateString(date) {
   const year = date.getFullYear();
@@ -45,7 +58,7 @@ function viewingCurrentDay() {
 }
 
 function viewingCurrentWeek() {
-  if (!selectedDate) {
+  if (!weekAnchor) {
     return false;
   }
 
@@ -227,6 +240,124 @@ async function renderMonth() {
     }
     grid.appendChild(cell);
   }
+}
+
+async function renderWeek() {
+  currentView = "week";
+
+  viewer.innerHTML = "";
+
+  monthBtn.classList.remove("active");
+  weekBtn.classList.add("active");
+  dayBtn.classList.remove("active");
+
+  if (!weekAnchor) {
+    weekAnchor = startOfWeek(new Date());
+  }
+
+  updateNavigationButtons();
+
+  const start = new Date(weekAnchor);
+
+  const end = new Date(start);
+  end.setDate(start.getDate() + 7);
+
+  const weekEnd = new Date(start);
+  weekEnd.setDate(start.getDate() + 6);
+
+  title.textContent =
+    `${start.toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric"
+    })} – ${weekEnd.toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric"
+    })}`;
+
+  const status = document.getElementById("timelapseStatus");
+  status.textContent = "Loading week...";
+
+  const apiUrl =
+    `/api/timelapse/calendar` +
+    `?location=1` +
+    `&start=${dateString(start)}` +
+    `&end=${dateString(end)}`;
+
+  const response = await fetch(apiUrl);
+
+  if (!response.ok) {
+    throw new Error(`Week request failed: ${response.status}`);
+  }
+
+  const calendar = await response.json();
+
+  status.textContent = "";
+
+  const imagesByDate = new Map(
+    calendar.days.map(day => [day.date, day])
+  );
+
+  const week = document.createElement("div");
+  week.className = "timelapse-week";
+
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(start);
+    date.setDate(start.getDate() + i);
+
+    const dateKey = dateString(date);
+    const image = imagesByDate.get(dateKey);
+
+    const cell = document.createElement("div");
+    cell.className = "timelapse-week-day";
+
+    const heading = document.createElement("div");
+    heading.className = "timelapse-week-day-heading";
+
+    const weekday = document.createElement("span");
+    weekday.textContent = date.toLocaleDateString(undefined, {
+      weekday: "short"
+    });
+
+    const dayNumber = document.createElement("span");
+    dayNumber.textContent = date.toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric"
+    });
+
+    heading.appendChild(weekday);
+    heading.appendChild(dayNumber);
+
+    cell.appendChild(heading);
+
+    if (image) {
+      const thumbnail = document.createElement("img");
+
+      thumbnail.src = image.thumbnailUrl;
+      thumbnail.alt = `Time-lapse image for ${dateKey}`;
+      thumbnail.loading = "lazy";
+
+      cell.appendChild(thumbnail);
+      cell.classList.add("has-image");
+
+      cell.addEventListener("click", () => {
+        selectedDate = dateKey;
+
+        renderDay().catch(error => {
+          console.error(error);
+
+          document.getElementById("timelapseStatus").textContent =
+            "Unable to load time-lapse day.";
+        });
+      });
+    } else {
+      cell.classList.add("empty");
+    }
+
+    week.appendChild(cell);
+  }
+
+  viewer.appendChild(week);
 }
 
 async function renderDay() {
@@ -442,6 +573,16 @@ prevBtn.addEventListener("click", () => {
     return;
   }
 
+  if (currentView === "week") {
+    weekAnchor.setDate(weekAnchor.getDate() - 7);
+
+    renderWeek().catch(error => {
+      console.error(error);
+    });
+
+    return;
+  }
+
   if (currentView === "day") {
     const date = new Date(`${selectedDate}T12:00:00`);
     date.setDate(date.getDate() - 1);
@@ -463,6 +604,20 @@ nextBtn.addEventListener("click", () => {
     monthAnchor.setMonth(monthAnchor.getMonth() + 1);
 
     renderMonth().catch(error => {
+      console.error(error);
+    });
+
+    return;
+  }
+
+  if (currentView === "week") {
+    if (viewingCurrentWeek()) {
+      return;
+    }
+
+    weekAnchor.setDate(weekAnchor.getDate() + 7);
+
+    renderWeek().catch(error => {
       console.error(error);
     });
 
@@ -503,6 +658,29 @@ monthBtn.addEventListener("click", () => {
 
     document.getElementById("timelapseStatus").textContent =
       "Unable to load time-lapse calendar.";
+  });
+});
+
+weekBtn.addEventListener("click", () => {
+  if (currentView === "week") {
+    return;
+  }
+
+  let anchorDate;
+
+  if (selectedDate) {
+    anchorDate = new Date(`${selectedDate}T12:00:00`);
+  } else {
+    anchorDate = new Date();
+  }
+
+  weekAnchor = startOfWeek(anchorDate);
+
+  renderWeek().catch(error => {
+    console.error(error);
+
+    document.getElementById("timelapseStatus").textContent =
+      "Unable to load time-lapse week.";
   });
 });
 
