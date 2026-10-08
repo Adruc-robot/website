@@ -333,7 +333,7 @@ async function renderWeek() {
     if (image) {
       const thumbnail = document.createElement("img");
 
-      thumbnail.src = image.thumbnailUrl;
+      thumbnail.src = image.webUrl;
       thumbnail.alt = `Time-lapse image for ${dateKey}`;
       thumbnail.loading = "lazy";
 
