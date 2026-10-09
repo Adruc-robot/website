@@ -1,0 +1,75 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include("../partials/head") %>
+</head>
+<body>
+  <%- include("../partials/header") %>
+
+  <main class="page">
+    <section class="page-card">
+      <h1>Units</h1>
+
+      <p>
+        <a href="/units/new">Add Unit</a>
+      </p>
+
+      <table class="datatable">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Abbreviation</th>
+            <th>Type</th>
+            <th>System</th>
+            <th>Factor</th>
+            <th>Owner</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <% units.forEach(unit => { %>
+            <tr>
+              <td><%= unit.name %></td>
+              <td><%= unit.abbreviation || "" %></td>
+              <td><%= unit.measurement_type %></td>
+              <td><%= unit.measurement_system %></td>
+              <td>
+                <%= unit.to_base_factor == null
+                  ? "—"
+                  : unit.to_base_factor %>
+              </td>
+              <td>
+                <%= Number(unit.user_id) === Number(globalUserId)
+                  ? "Global"
+                  : "Personal" %>
+              </td>
+              <td>
+                <%= unit.active ? "Active" : "Inactive" %>
+              </td>
+              <td>
+                <% if (
+                  Number(unit.user_id) === Number(userId) ||
+                  (currentUser.role === "admin" &&
+                   Number(unit.user_id) === Number(globalUserId))
+                ) { %>
+                  <a href="/units/<%= unit.id %>/edit"
+                     title="Edit Unit">
+                    <svg class="icon">
+                      <use href="/public/icons/icons.svg#stylus"></use>
+                    </svg>
+                  </a>
+                <% } %>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <%- include("../partials/footer") %>
+</body>
+</html>
