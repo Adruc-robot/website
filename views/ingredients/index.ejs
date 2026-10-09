@@ -1,0 +1,79 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include("../partials/head") %>
+</head>
+<body>
+  <%- include("../partials/header") %>
+
+  <main class="page">
+    <section class="page-card">
+      <h1>Ingredients</h1>
+
+      <p>
+        <a href="/ingredients/new">Add Ingredient</a>
+      </p>
+
+      <% if (ingredients.length === 0) { %>
+        <p>No ingredients yet.</p>
+      <% } else { %>
+        <table class="datatable">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Description</th>
+              <th>Owner</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <% ingredients.forEach(ingredient => { %>
+              <tr>
+                <td><%= ingredient.name %></td>
+                <td><%= ingredient.description || "" %></td>
+
+                <td>
+                  <%= ingredient.user_id === globalUserId
+                    ? "Global"
+                    : "Personal" %>
+                </td>
+
+                <td>
+                  <%= ingredient.active === 1
+                    ? "Active"
+                    : "Inactive" %>
+                </td>
+
+                <td>                 
+                  <% if (
+                    Number(ingredient.user_id) === Number(userId) ||
+                    (currentUser.role === "admin" &&
+                    Number(ingredient.user_id) === Number(globalUserId))
+                  ) { %>
+                    <a
+                      href="/ingredients/<%= ingredient.id %>/edit"
+                      class="icon-link"
+                      aria-label="Edit <%= ingredient.name %>"
+                    >
+                      <svg class="icon">
+                        <use href="/public/icons/icons.svg#stylus"></use>
+                      </svg>
+                    </a>
+                  <% } else { %>
+                    &mdash;
+                  <% } %>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </section>
+  </main>
+
+  <%- include("../partials/footer") %>
+</body>
+</html>

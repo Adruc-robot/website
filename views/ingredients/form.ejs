@@ -1,0 +1,76 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include("../partials/head") %>
+</head>
+<body>
+  <%- include("../partials/header") %>
+
+  <main class="page">
+    <section class="page-card">
+      <h1><%= title %></h1>
+
+      <form method="post" action="<%= action %>">
+
+        <p>
+          <label>
+            Name<br>
+            <input
+              type="text"
+              name="name"
+              value="<%= ingredient.name || '' %>"
+              required
+            >
+          </label>
+        </p>
+
+        <p>
+          <label>
+            Description<br>
+            <textarea name="description"><%= ingredient.description || '' %></textarea>
+          </label>
+        </p>
+
+        <% if (isAdmin && !ingredient.id) { %>
+          <p>
+            <label>
+              Owner<br>
+              <select name="owner">
+                <option value="personal">Personal</option>
+                <option value="global">Global (available to everyone)</option>
+              </select>
+            </label>
+          </p>
+        <% } %>
+
+        <p>
+          <label>
+            Active<br>
+            <select name="active">
+              <option
+                value="1"
+                <%= ingredient.active === 1 ? "selected" : "" %>
+              >
+                Active
+              </option>
+              <option
+                value="0"
+                <%= ingredient.active === 0 ? "selected" : "" %>
+              >
+                Inactive
+              </option>
+            </select>
+          </label>
+        </p>
+
+        <button type="submit">Save</button>
+        <a href="/ingredients">Cancel</a>
+
+      </form>
+    </section>
+  </main>
+
+  <%- include("../partials/footer") %>
+</body>
+</html>

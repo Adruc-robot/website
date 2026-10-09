@@ -20,6 +20,7 @@ app.use(express.urlencoded({ extended: true }));
 const homeRoutes = require("./routes/home");
 const authRoutes = require("./routes/auth");
 const locationsRoutes = require("./routes/locations");
+const ingredientRoutes = require("./routes/ingredients");
 
 //Authentication
 app.use(session({
@@ -29,13 +30,14 @@ app.use(session({
 }));
 
 app.use((req, res, next) => {
-    res.locals.currentUser = req.session.user || null;
-    next();
+  res.locals.currentUser = req.session.user || null;
+  next();
 });
 
 app.use("/", homeRoutes);
 app.use("/login", authRoutes);
 app.use("/locations", locationsRoutes);
+app.use("/ingredients", ingredientRoutes);
 
 app.get("/calendar", (req, res) => {
   res.render("calendar/index", {

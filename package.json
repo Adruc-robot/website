@@ -5,6 +5,7 @@
   "main": "app.js",
   "scripts": {
     "migrate": "node db/migrate.js",
+    "seed": "node db/seed.js",
     "process-images": "node scripts/processIncoming.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
