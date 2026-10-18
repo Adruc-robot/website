@@ -1,0 +1,142 @@
+
+<%- include("../partials/head") %>
+<%- include("../partials/header") %>
+
+<main class="page">
+  <section class="page-card">
+
+    <div class="recipe-detail-header">
+      <h1><%= recipe.title %></h1>
+
+      <div class="recipe-detail-actions">
+        <a href="/recipes">Back to Recipes</a>
+
+        <% if (canEdit) { %>
+          <a href="/recipes/<%= recipe.id %>/edit">Edit Recipe</a>
+
+          <form
+            method="POST"
+            action="/recipes/<%= recipe.id %>/delete"
+            onsubmit="return confirm('Are you sure you want to permanently delete this recipe? This cannot be undone.');"
+          >
+            <button type="submit" class="recipe-delete-button">
+              Delete Recipe
+            </button>
+          </form>
+        <% } %>
+
+        <% if (currentUser && currentUser.role === "admin" && isGlobal) { %>
+          <a
+            href="/recipes/<%= recipe.id %>/export"
+            class="button"
+          >
+            Export Recipe
+          </a>
+        <% } %>
+
+        <% if (isGlobal && Number(recipe.user_id) !== Number(currentUser.id)) { %>
+          <form
+            method="POST"
+            action="/recipes/<%= recipe.id %>/copy"
+          >
+            <button type="submit">
+              Copy to My Recipes
+            </button>
+          </form>
+        <% } %>
+      </div>
+
+    </div>
+
+    <% if (isGlobal) { %>
+      <p class="recipe-global-label">Stock Recipe</p>
+    <% } %>
+
+    <% if (recipe.description) { %>
+      <p class="recipe-description"><%= recipe.description %></p>
+    <% } %>
+
+    <!-- Recipe metadata -->
+    <div class="recipe-detail-meta">
+
+      <% if (recipe.servings != null) { %>
+        <div>
+          <strong>Servings</strong>
+          <span><%= recipe.servings %></span>
+        </div>
+      <% } %>
+
+      <% if (recipe.prep_minutes != null) { %>
+        <div>
+          <strong>Prep Time</strong>
+          <span><%= recipe.prep_minutes %> min</span>
+        </div>
+      <% } %>
+
+      <% if (recipe.cook_minutes != null) { %>
+        <div>
+          <strong>Cook Time</strong>
+          <span><%= recipe.cook_minutes %> min</span>
+        </div>
+      <% } %>
+
+    </div>
+
+    <!-- Ingredients -->
+    <section class="recipe-detail-section">
+      <h2>Ingredients</h2>
+
+      <% if (recipeIngredients.length === 0) { %>
+        <p>No ingredients have been added.</p>
+      <% } else { %>
+        <ul class="recipe-detail-ingredients">
+          <% recipeIngredients.forEach(item => { %>
+            <li>
+              <% if (item.quantity != null) { %>
+                <span><%= Number(item.quantity) %></span>
+              <% } %>
+
+              <% if (item.unit_abbreviation || item.unit_name) { %>
+                <span><%= item.unit_abbreviation || item.unit_name %></span>
+              <% } %>
+
+              <span><%= item.ingredient_name %></span>
+
+              <% if (item.preparation) { %>
+                <span class="recipe-ingredient-preparation">
+                  (<%= item.preparation %>)
+                </span>
+              <% } %>
+            </li>
+          <% }) %>
+        </ul>
+      <% } %>
+    </section>
+
+    <!-- Cooking instructions -->
+    <section class="recipe-detail-section">
+      <h2>Cooking Instructions</h2>
+
+      <% if (recipeSteps.length === 0) { %>
+        <p>No cooking instructions have been added.</p>
+      <% } else { %>
+        <ol class="recipe-detail-steps">
+          <% recipeSteps.forEach(step => { %>
+            <li value="<%= step.step_number %>"><%= step.instruction %></li>
+          <% }) %>
+        </ol>
+      <% } %>
+    </section>
+
+    <!-- Notes -->
+    <% if (recipe.notes) { %>
+      <section class="recipe-detail-section">
+        <h2>Notes</h2>
+        <p class="recipe-detail-notes"><%= recipe.notes %></p>
+      </section>
+    <% } %>
+
+  </section>
+</main>
+
+<%- include("../partials/footer") %>

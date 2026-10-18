@@ -1,0 +1,158 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include("../partials/head") %>
+</head>
+<body>
+  <%- include("../partials/header") %>
+
+  <main class="page">
+    <section class="page-card">
+      <h1><%= title %></h1>
+
+      <form method="POST" action="<%= action %>">
+
+        <p>
+          <label>
+            Name<br>
+            <input
+              type="text"
+              name="name"
+              value="<%= unit.name || '' %>"
+              required
+              maxlength="100">
+          </label>
+        </p>
+
+        <p>
+          <label>
+            Abbreviation<br>
+            <input
+              type="text"
+              name="abbreviation"
+              value="<%= unit.abbreviation || '' %>"
+              maxlength="20">
+          </label>
+        </p>
+
+        <% if (isAdmin && !unit.id) { %>
+          <p>
+            <label>
+              Owner<br>
+              <select name="owner">
+                <option value="personal">Personal</option>
+                <option value="global">
+                  Global (available to everyone)
+                </option>
+              </select>
+            </label>
+          </p>
+        <% } %>
+
+        <p>
+          <label>
+            Measurement Type<br>
+            <select name="measurement_type" required>
+              <% ["volume", "weight", "count", "length", "other"].forEach(type => { %>
+                <option
+                  value="<%= type %>"
+                  <%= unit.measurement_type === type ? "selected" : "" %>>
+                  <%= type.charAt(0).toUpperCase() + type.slice(1) %>
+                </option>
+              <% }) %>
+            </select>
+          </label>
+        </p>
+
+        <p>
+          <label>
+            Measurement System<br>
+            <select name="measurement_system" required>
+              <% ["imperial", "metric", "universal"].forEach(system => { %>
+                <option
+                  value="<%= system %>"
+                  <%= unit.measurement_system === system ? "selected" : "" %>>
+                  <%= system.charAt(0).toUpperCase() + system.slice(1) %>
+                </option>
+              <% }) %>
+            </select>
+          </label>
+        </p>
+
+        <p>
+          <label>
+            Conversion Factor<br>
+            <input
+              type="number"
+              name="to_base_factor"
+              value="<%= unit.to_base_factor ?? '' %>"
+              min="0.0000000001"
+              step="any">
+          </label>
+          <small>
+            Multiplier to the base unit:
+            milliliters for volume, grams for weight.
+            Leave blank if no standard conversion exists.
+          </small>
+        </p>
+
+        <p>
+          <label>
+            Auto Convert<br>
+            <select name="auto_convert">
+              <option value="1"
+                <%= Number(unit.auto_convert) === 1 ? "selected" : "" %>>
+                Yes
+              </option>
+              <option value="0"
+                <%= Number(unit.auto_convert) === 0 ? "selected" : "" %>>
+                No
+              </option>
+            </select>
+          </label>
+        </p>
+
+        <p>
+          <label>
+            Display Priority<br>
+            <input
+              type="number"
+              name="display_priority"
+              value="<%= unit.display_priority ?? 100 %>"
+              step="1"
+              required>
+          </label>
+          <small>
+            Lower numbers appear first within each measurement type.
+          </small>
+        </p>
+
+        <p>
+          <label>
+            Active<br>
+            <select name="active">
+              <option value="1"
+                <%= Number(unit.active) === 1 ? "selected" : "" %>>
+                Active
+              </option>
+              <option value="0"
+                <%= Number(unit.active) === 0 ? "selected" : "" %>>
+                Inactive
+              </option>
+            </select>
+          </label>
+        </p>
+
+        <p>
+          <button type="submit">Save Unit</button>
+          <a href="/units">Cancel</a>
+        </p>
+
+      </form>
+    </section>
+  </main>
+
+  <%- include("../partials/footer") %>
+</body>
+</html>

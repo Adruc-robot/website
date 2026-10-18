@@ -1,0 +1,521 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include("../partials/head") %>
+</head>
+<body>
+  <%- include("../partials/header") %>
+
+  <main class="page">
+    <section class="page-card">
+      <h1><%= title %> - <%= recipe.title %></h1>
+      <details class="recipe-details" id="recipe-details" data-persist="<%= recipe.id ? 'true' : 'false' %>" open>
+        <summary>Recipe Details</summary>
+        <form method="POST" action="<%= action %>">
+
+          <p>
+            <label>
+              Recipe Title<br>
+              <input
+                type="text"
+                name="title"
+                value="<%= recipe.title || '' %>"
+                required
+                maxlength="255">
+            </label>
+          </p>
+
+          <p>
+            <label>
+              Description<br>
+              <textarea
+                name="description"
+                rows="3"><%= recipe.description || '' %></textarea>
+            </label>
+          </p>
+
+          <% if (isAdmin && !recipe.id) { %>
+            <p>
+              <label>
+                Owner<br>
+                <select name="owner">
+                  <option value="personal">Personal</option>
+                  <option value="global">
+                    Stock (available to everyone)
+                  </option>
+                </select>
+              </label>
+            </p>
+          <% } %>
+
+          <p>
+            <label>
+              Servings<br>
+              <input
+                type="number"
+                name="servings"
+                value="<%= recipe.servings ?? '' %>"
+                min="0.01"
+                step="any">
+            </label>
+          </p>
+
+          <p>
+            <label>
+              Preparation Time (minutes)<br>
+              <input
+                type="number"
+                name="prep_minutes"
+                value="<%= recipe.prep_minutes ?? '' %>"
+                min="0"
+                step="1">
+            </label>
+          </p>
+
+          <p>
+            <label>
+              Cooking Time (minutes)<br>
+              <input
+                type="number"
+                name="cook_minutes"
+                value="<%= recipe.cook_minutes ?? '' %>"
+                min="0"
+                step="1">
+            </label>
+          </p>
+
+          <p>
+            <label>
+              Notes<br>
+              <textarea
+                name="notes"
+                rows="4"><%= recipe.notes || '' %></textarea>
+            </label>
+          </p>
+
+          <p>
+            <button type="submit">Save Recipe</button>
+            <a href="/recipes">Cancel</a>
+          </p>
+
+        </form>
+      </details>
+      <% if (recipe.id) { %>
+        <section id="ingredients-section">
+          <h2>Ingredients</h2>
+
+          <% if (recipeIngredients.length === 0) { %>
+            <p>No ingredients added yet.</p>
+          <% } else { %>
+            <table class="datatable">
+              <thead>
+                <tr>
+                  <th>Ingredient</th>
+                  <th>Quantity</th>
+                  <th>Unit</th>
+                  <th>Preparation</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+
+              <tbody>
+
+                <% recipeIngredients.forEach(item => { %>
+                  <tr>
+                    <td><%= item.ingredient_name %></td>
+                    <td><%= item.quantity ?? "—" %></td>
+                    <td><%= item.unit_abbreviation || item.unit_name || "—" %></td>
+                    <td><%= item.preparation || "" %></td>
+                    <td>
+                      <button
+                        type="button"
+                        onclick="document.getElementById('edit-<%= item.id %>').hidden =
+                          !document.getElementById('edit-<%= item.id %>').hidden">
+                        Edit
+                      </button>
+
+                      <form
+                        method="POST"
+                        action="/recipes/<%= recipe.id %>/ingredients/<%= item.id %>/delete"
+                        onsubmit="return confirm('Remove this ingredient from the recipe?');"
+                        style="display:inline">
+                        <button type="submit">Remove</button>
+                      </form>
+                    </td>
+                  </tr>
+
+                  <tr id="edit-<%= item.id %>" hidden>
+                    <td colspan="5">
+                      <form
+                        method="POST"
+                        action="/recipes/<%= recipe.id %>/ingredients/<%= item.id %>">
+
+                        <p>
+                          <label>
+                            Ingredient
+                            <select name="ingredient_id" required>
+                              <% ingredients.forEach(ingredient => { %>
+                                <option
+                                  value="<%= ingredient.id %>"
+                                  <%= Number(ingredient.id) === Number(item.ingredient_id)
+                                    ? "selected" : "" %>>
+                                  <%= ingredient.name %>
+                                </option>
+                              <% }) %>
+                            </select>
+                          </label>
+                        </p>
+
+                        <p>
+                          <label>
+                            Quantity
+                            <input
+                              type="number"
+                              name="quantity"
+                              min="0.001"
+                              step="0.001"
+                              value="<%= item.quantity ?? '' %>">
+                          </label>
+                        </p>
+
+                        <p>
+                          <label>
+                            Unit
+                            <select name="unit_id">
+                              <option value="">No unit</option>
+                              <% units.forEach(unit => { %>
+                                <option
+                                  value="<%= unit.id %>"
+                                  <%= Number(unit.id) === Number(item.unit_id)
+                                    ? "selected" : "" %>>
+                                  <%= unit.name %>
+                                  <%= unit.abbreviation ? `(${unit.abbreviation})` : "" %>
+                                </option>
+                              <% }) %>
+                            </select>
+                          </label>
+                        </p>
+
+                        <p>
+                          <label>
+                            Preparation
+                            <input
+                              type="text"
+                              name="preparation"
+                              maxlength="255"
+                              value="<%= item.preparation || '' %>">
+                          </label>
+                        </p>
+
+                        <p>
+                          <label>
+                            Sort Order
+                            <input
+                              type="number"
+                              name="sort_order"
+                              min="0"
+                              step="1"
+                              value="<%= item.sort_order %>">
+                          </label>
+                        </p>
+
+                        <button type="submit">Save Changes</button>
+                        <button
+                          type="button"
+                          onclick="document.getElementById('edit-<%= item.id %>').hidden = true">
+                          Cancel
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                <% }) %>
+
+              </tbody>
+            </table>
+
+
+          <% } %>
+          <details class="add-ingredient" id="add-ingredient">
+            <summary>Add Ingredient</summary>
+
+            <form
+              method="POST"
+              action="/recipes/<%= recipe.id %>/ingredients">
+
+              <p>
+                <label>
+                  Ingredient<br>
+                  <select name="ingredient_id" required>
+                    <option value="">Select an ingredient</option>
+
+                    <% ingredients.forEach(ingredient => { %>
+                      <option value="<%= ingredient.id %>">
+                        <%= ingredient.name %>
+                      </option>
+                    <% }) %>
+                  </select>
+                </label>
+              </p>
+
+              <p>
+                <label>
+                  Quantity<br>
+                  <input
+                    type="number"
+                    name="quantity"
+                    min="0.001"
+                    step="0.001">
+                </label>
+              </p>
+
+              <p>
+                <label>
+                  Unit<br>
+                  <select name="unit_id">
+                    <option value="">No unit</option>
+
+                    <% units.forEach(unit => { %>
+                      <option value="<%= unit.id %>">
+                        <%= unit.name %>
+                        <% if (unit.abbreviation) { %>
+                          (<%= unit.abbreviation %>)
+                        <% } %>
+                      </option>
+                    <% }) %>
+                  </select>
+                </label>
+              </p>
+
+              <p>
+                <label>
+                  Preparation<br>
+                  <input
+                    type="text"
+                    name="preparation"
+                    maxlength="255"
+                    placeholder="e.g., softened, diced, sifted">
+                </label>
+              </p>
+
+              <p>
+                <label>
+                  Sort Order<br>
+                  <input
+                    type="number"
+                    name="sort_order"
+                    value="<%= recipeIngredients.length + 1 %>"
+                    min="0"
+                    step="1">
+                </label>
+              </p>
+
+              <p>
+                <button type="submit">Add Ingredient</button>
+              </p>
+
+            </form>
+          </details>
+        </section>
+      <% } %>
+
+      <% if (recipe.id) { %>
+        <section id="steps-section">
+
+          <h2>Cooking Instructions</h2>
+
+          <% if (recipeSteps.length === 0) { %>
+            <p>No cooking instructions added yet.</p>
+
+          <% } else { %>
+            <ol class="recipe-steps">
+              <% recipeSteps.forEach((step, index) => { %>
+                <li value="<%= step.step_number %>">
+
+                  <div class="recipe-step-content">
+                    <span class="recipe-step-instruction"><%= step.instruction %></span>
+                    <% if (recipeSteps.length > 1) { %>
+                      <div class="recipe-step-actions">
+                        <!-- Move step up -->
+                        <form
+                          method="POST"
+                          action="/recipes/<%= recipe.id %>/steps/<%= step.id %>/move">
+
+                          <input type="hidden" name="direction" value="up">
+
+                          <button
+                            type="submit"
+                            title="Move step up"
+                            <%= index === 0 ? "disabled" : "" %>>
+                            ↑
+                          </button>
+                        </form>
+
+                        <!-- Move step down -->
+                        <form
+                          method="POST"
+                          action="/recipes/<%= recipe.id %>/steps/<%= step.id %>/move">
+
+                          <input type="hidden" name="direction" value="down">
+
+                          <button
+                            type="submit"
+                            title="Move step down"
+                            <%= index === recipeSteps.length - 1 ? "disabled" : "" %>>
+                            ↓
+                          </button>
+                        </form>
+
+                        <button
+                          type="button"
+                          onclick="document.getElementById('step-edit-<%= step.id %>').hidden =
+                            !document.getElementById('step-edit-<%= step.id %>').hidden">
+                          Edit
+                        </button>
+
+                        <form
+                          method="POST"
+                          action="/recipes/<%= recipe.id %>/steps/<%= step.id %>/delete"
+                          onsubmit="return confirm('Remove this cooking instruction?');">
+                          <button type="submit">Remove</button>
+                        </form>
+                      </div>
+                    <% } %>
+                  </div>
+
+                  <div id="step-edit-<%= step.id %>" hidden>
+                    <form
+                      method="POST"
+                      action="/recipes/<%= recipe.id %>/steps/<%= step.id %>">
+
+                      <p>
+                        <label>
+                          Step Number<br>
+                          <input
+                            type="number"
+                            name="step_number"
+                            min="1"
+                            step="1"
+                            value="<%= step.step_number %>"
+                            required>
+                        </label>
+                      </p>
+
+                      <p>
+                        <label>
+                          Instruction<br>
+                          <textarea
+                            name="instruction"
+                            rows="4"
+                            required><%= step.instruction %></textarea>
+                        </label>
+                      </p>
+
+                      <p>
+                        <button type="submit">Save Changes</button>
+                        <button
+                          type="button"
+                          onclick="document.getElementById('step-edit-<%= step.id %>').hidden = true">
+                          Cancel
+                        </button>
+                      </p>
+
+                    </form>
+                  </div>
+
+                </li>
+              <% }) %>
+            </ol>
+          <% } %>
+          <details class="add-step" id="#add-step">
+            <summary>Add Step</summary>
+
+            <form
+              method="POST"
+              action="/recipes/<%= recipe.id %>/steps">
+
+              <p>
+                <label>
+                  Step Number<br>
+                  <input
+                    type="number"
+                    name="step_number"
+                    min="1"
+                    step="1"
+                    value="<%= recipeSteps.length > 0
+                      ? Math.max(...recipeSteps.map(step => step.step_number)) + 1
+                      : 1 %>"
+                    required>
+                </label>
+              </p>
+
+              <p>
+                <label>
+                  Instruction<br>
+                  <textarea
+                    name="instruction"
+                    rows="4"
+                    required
+                    placeholder="Describe what to do in this step"></textarea>
+                </label>
+              </p>
+
+              <p>
+                <button type="submit">Add Step</button>
+              </p>
+
+            </form>
+          </details>
+        </section>
+      <% } %>
+
+
+    </section>
+  </main>
+
+  <%- include("../partials/footer") %>
+
+  <script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const hash = window.location.hash;
+
+    // Expand the form that was just used.
+    if (hash === "#add-ingredient") {
+      document.getElementById("add-ingredient")?.setAttribute("open", "");
+    }
+
+    if (hash === "#add-step") {
+      document.getElementById("add-step")?.setAttribute("open", "");
+    }
+
+    // Remember whether Recipe Details is expanded.
+    const details = document.getElementById("recipe-details");
+
+    if (details && details.dataset.persist === "true") {
+      const key = "recipe-details-open";
+      const saved = sessionStorage.getItem(key);
+
+      if (saved !== null) {
+        details.open = saved === "true";
+      }
+
+      details.addEventListener("toggle", () => {
+        sessionStorage.setItem(key, String(details.open));
+      });
+    }
+
+    // Scroll after restoring the form's expanded state.
+    if (hash) {
+      const target = document.getElementById(hash.slice(1));
+
+      if (target) {
+        requestAnimationFrame(() => {
+          target.scrollIntoView({ block: "start" });
+        });
+      }
+    }
+  });
+  </script>
+
+</body>
+</html>

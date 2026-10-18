@@ -33,6 +33,9 @@ const homeRoutes = require("./routes/home");
 const authRoutes = require("./routes/auth");
 const locationsRoutes = require("./routes/locations");
 const timelapseRoutes = require("./routes/timelapse");
+const ingredientRoutes = require("./routes/ingredients");
+const unitRoutes = require("./routes/units");
+const recipeRoutes = require("./routes/recipes");
 
 //Authentication
 app.use(session({
@@ -42,14 +45,17 @@ app.use(session({
 }));
 
 app.use((req, res, next) => {
-    res.locals.currentUser = req.session.user || null;
-    next();
+  res.locals.currentUser = req.session.user || null;
+  next();
 });
 
 app.use("/", homeRoutes);
 app.use("/login", authRoutes);
 app.use("/locations", locationsRoutes);
 app.use("/timelapse", timelapseRoutes);
+app.use("/ingredients", ingredientRoutes);
+app.use("/units", unitRoutes);
+app.use("/recipes", recipeRoutes);
 
 app.get("/calendar", (req, res) => {
   res.render("calendar/index", {

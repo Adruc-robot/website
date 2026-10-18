@@ -1,0 +1,48 @@
+<%- include("../partials/head") %>
+<%- include("../partials/header") %>
+
+<main class="page">
+    <h1>Import Recipe</h1>
+
+    <% if (success) { %>
+    <p class="success"><%= success %></p>
+    <% } %>
+
+    <% if (errors && errors.length) { %>
+    <div class="error">
+        <strong>Import failed:</strong>
+        <ul>
+        <% errors.forEach(error => { %>
+            <li><%= error %></li>
+        <% }) %>
+        </ul>
+    </div>
+    <% } %>
+
+    <p>
+    Upload a recipe JSON file exported from the recipe website.
+    Imported recipes will become global recipes.
+    </p>
+
+    <form
+    action="/recipes/import"
+    method="POST"
+    enctype="multipart/form-data"
+    >
+    <label for="recipeFile">Recipe JSON File</label>
+
+    <input
+        type="file"
+        id="recipeFile"
+        name="recipeFile"
+        accept=".json,application/json"
+        required
+    >
+
+    <button type="submit">
+        Import Recipe
+    </button>
+    </form>
+</main>
+
+<%- include("../partials/footer") %>

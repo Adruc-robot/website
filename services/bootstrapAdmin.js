@@ -14,13 +14,13 @@ async function bootstrapAdmin() {
     }
 
     const [rows] = await db.query(
-        "SELECT COUNT(*) AS user_count FROM users"
+        "SELECT COUNT(*) AS admin_count FROM users WHERE role = 'admin'"
     );
 
-    const userCount = Number(rows[0].user_count);
+    const adminCount = Number(rows[0].admin_count);
 
-    // A user already exists, so bootstrap is no longer needed.
-    if (userCount > 0) {
+    // An administrator already exists, so bootstrap is unnecessary.
+    if (adminCount > 0) {
         return;
     }
 
