@@ -127,3 +127,207 @@ a:focus {
 .icon-link:hover .icon {
     opacity: 1;
 }
+
+.recipe-details,
+.add-ingredient,
+.add-step {
+  margin-top: 1.5rem;
+}
+
+.recipe-details summary,
+.add-ingredient summary,
+.add-step summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0.5rem 0;
+}
+
+.recipe-details[open] summary,
+.add-ingredient[open] summary,
+.add-step[open] summary {
+  margin-bottom: 1rem;
+}
+
+#ingredients-section,
+#steps-section,
+#add-ingredient,
+#add-step {
+  scroll-margin-top: 1.5rem;
+}
+
+.recipe-steps {
+  padding-left: 1.75rem;
+}
+
+.recipe-steps > li {
+  display: list-item;
+  margin-bottom: 1.25rem;
+}
+
+.recipe-step-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+}
+
+.recipe-step-instruction {
+  flex: 1;
+  white-space: pre-wrap;
+}
+
+.recipe-step-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.recipe-step-actions form {
+  margin: 0;
+}
+
+.recipe-steps [hidden] {
+  display: none;
+}
+
+.recipe-step-actions button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+
+/* Recipe Detail Page */
+
+.recipe-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.recipe-detail-header h1 {
+  margin: 0;
+}
+
+.recipe-detail-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.recipe-detail-actions form {
+  margin: 0;
+}
+
+.recipe-global-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  opacity: 0.7;
+  margin-top: 0.5rem;
+}
+
+.recipe-description {
+  margin: 1.5rem 0;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+/* Servings, prep time, cook time */
+
+.recipe-detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  margin: 1.5rem 0;
+  padding: 1rem 0;
+  border-top: 1px solid var(--border-color, #ccc);
+  border-bottom: 1px solid var(--border-color, #ccc);
+}
+
+.recipe-detail-meta > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.recipe-detail-meta strong {
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+
+/* Recipe sections */
+
+.recipe-detail-section {
+  margin-top: 2rem;
+}
+
+.recipe-detail-section h2 {
+  margin-bottom: 1rem;
+}
+
+/* Ingredients */
+
+.recipe-detail-ingredients {
+  padding-left: 1.5rem;
+}
+
+.recipe-detail-ingredients li {
+  margin-bottom: 0.65rem;
+  line-height: 1.5;
+}
+
+.recipe-ingredient-preparation {
+  opacity: 0.7;
+  font-style: italic;
+}
+
+/* Cooking instructions */
+
+.recipe-detail-steps {
+  padding-left: 1.75rem;
+}
+
+.recipe-detail-steps li {
+  margin-bottom: 1.25rem;
+  padding-left: 0.5rem;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+/* Notes */
+
+.recipe-detail-notes {
+  white-space: pre-wrap;
+  line-height: 1.6;
+}
+
+/* Small screens */
+
+@media (max-width: 600px) {
+  .recipe-detail-header {
+    flex-direction: column;
+  }
+
+  .recipe-detail-meta {
+    gap: 1.5rem;
+  }
+}
+
+.recipe-delete-button {
+  background-color: #b42318;
+  color: white;
+  border: 1px solid #b42318;
+  border-radius: 4px;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+}
+
+.recipe-delete-button:hover {
+  background-color: #912018;
+}
+
+.recipe-delete-button:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}

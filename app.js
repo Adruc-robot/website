@@ -22,6 +22,7 @@ const authRoutes = require("./routes/auth");
 const locationsRoutes = require("./routes/locations");
 const ingredientRoutes = require("./routes/ingredients");
 const unitRoutes = require("./routes/units");
+const recipeRoutes = require("./routes/recipes");
 
 //Authentication
 app.use(session({
@@ -40,6 +41,7 @@ app.use("/login", authRoutes);
 app.use("/locations", locationsRoutes);
 app.use("/ingredients", ingredientRoutes);
 app.use("/units", unitRoutes);
+app.use("/recipes", recipeRoutes);
 
 app.get("/calendar", (req, res) => {
   res.render("calendar/index", {

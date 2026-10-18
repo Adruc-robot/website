@@ -1,0 +1,92 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include("../partials/head") %>
+</head>
+<body>
+  <%- include("../partials/header") %>
+
+  <main class="page">
+    <section class="page-card">
+      <h1>Recipes</h1>
+
+        <p>
+            <a href="/recipes/new">Add Recipe</a>
+            |
+            <a href="/ingredients">Manage Ingredients</a>
+            |
+            <a href="/units">Manage Units</a>
+            <% if (currentUser && currentUser.role === "admin") { %>
+              |
+              <a href="/recipes/import">Import Recipe</a>
+            <% } %>
+        </p>
+
+      <table class="datatable">
+        <thead>
+          <tr>
+            <th>Recipe</th>
+            <th>Servings</th>
+            <th>Prep</th>
+            <th>Cook</th>
+            <th>Owner</th>
+            <th></th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <% recipes.forEach(recipe => { %>
+            <tr>
+              <td>
+                <a href="/recipes/<%= recipe.id %>">
+                  <%= recipe.title %>
+                </a>
+              </td>
+
+              <td>
+                <%= recipe.servings ?? "—" %>
+              </td>
+
+              <td>
+                <%= recipe.prep_minutes == null
+                  ? "—"
+                  : recipe.prep_minutes + " min" %>
+              </td>
+
+              <td>
+                <%= recipe.cook_minutes == null
+                  ? "—"
+                  : recipe.cook_minutes + " min" %>
+              </td>
+
+              <td>
+                <%= Number(recipe.user_id) === Number(globalUserId)
+                  ? "Stock"
+                  : "Personal" %>
+              </td>
+
+              <td>
+                <% if (
+                  Number(recipe.user_id) === Number(userId) ||
+                  (currentUser.role === "admin" &&
+                   Number(recipe.user_id) === Number(globalUserId))
+                ) { %>
+                  <a href="/recipes/<%= recipe.id %>/edit"
+                     title="Edit Recipe">
+                    <svg class="icon">
+                      <use href="/public/icons/icons.svg#stylus"></use>
+                    </svg>
+                  </a>
+                <% } %>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <%- include("../partials/footer") %>
+</body>
+</html>
