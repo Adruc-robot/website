@@ -9,11 +9,21 @@
 
   <main class="page">
     <section class="page-card">
-      <h1><%= title %> - <%= recipe.title %></h1>
+      <h1><%= title %><% if (recipe?.title) { %> - <%= recipe.title %><% } %></h1>
+      <% if (typeof errors !== "undefined" && errors.length > 0) { %>
+        <div class="form-errors" role="alert">
+          <strong>Please correct the following:</strong>
+          <ul>
+            <% errors.forEach(error => { %>
+              <li><%= error %></li>
+            <% }); %>
+          </ul>
+        </div>
+      <% } %>      
       <details class="recipe-details" id="recipe-details" data-persist="<%= recipe.id ? 'true' : 'false' %>" open>
         <summary>Recipe Details</summary>
-        <form method="POST" action="<%= action %>">
-
+        <!--<form method="POST" action="<%= action %>">-->
+<form method="POST" action="<%= action %>" novalidate>
           <p>
             <label>
               Recipe Title<br>
@@ -147,6 +157,13 @@
 
                   <tr id="edit-<%= item.id %>" hidden>
                     <td colspan="5">
+                      <% if (typeof ingredientEditError !== "undefined" &&
+                            ingredientEditError &&
+                            Number(ingredientEditError.ingredientRowId) === Number(item.id)) { %>
+                        <div class="form-errors" role="alert">
+                          <strong><%= ingredientEditError.message %></strong>
+                        </div>
+                      <% } %>
                       <form
                         method="POST"
                         action="/recipes/<%= recipe.id %>/ingredients/<%= item.id %>">
@@ -238,7 +255,11 @@
           <% } %>
           <details class="add-ingredient" id="add-ingredient">
             <summary>Add Ingredient</summary>
-
+            <% if (typeof ingredientError !== "undefined" && ingredientError) { %>
+              <div class="form-errors" role="alert">
+                <strong><%= ingredientError %></strong>
+              </div>
+            <% } %>
             <form
               method="POST"
               action="/recipes/<%= recipe.id %>/ingredients">
@@ -266,7 +287,6 @@
                     name="quantity"
                     min="0.001"
                     step="0.001">
-                </label>
               </p>
 
               <p>
@@ -384,6 +404,13 @@
                   </div>
 
                   <div id="step-edit-<%= step.id %>" hidden>
+                    <% if (typeof stepEditError !== "undefined" &&
+                          stepEditError &&
+                          Number(stepEditError.stepId) === Number(step.id)) { %>
+                      <div class="form-errors" role="alert">
+                        <strong><%= stepEditError.message %></strong>
+                      </div>
+                    <% } %>
                     <form
                       method="POST"
                       action="/recipes/<%= recipe.id %>/steps/<%= step.id %>">
@@ -391,23 +418,14 @@
                       <p>
                         <label>
                           Step Number<br>
-                          <input
-                            type="number"
-                            name="step_number"
-                            min="1"
-                            step="1"
-                            value="<%= step.step_number %>"
-                            required>
+                          <input type="number" name="step_number" min="1" step="1" value="<%= step.step_number %>" required>
                         </label>
                       </p>
 
                       <p>
                         <label>
                           Instruction<br>
-                          <textarea
-                            name="instruction"
-                            rows="4"
-                            required><%= step.instruction %></textarea>
+                          <textarea name="instruction" rows="4" required><%= step.instruction %></textarea>
                         </label>
                       </p>
 
@@ -427,9 +445,13 @@
               <% }) %>
             </ol>
           <% } %>
-          <details class="add-step" id="#add-step">
+          <details class="add-step" id="add-step">
             <summary>Add Step</summary>
-
+            <% if (typeof stepError !== "undefined" && stepError) { %>
+              <div class="form-errors" role="alert">
+                <strong><%= stepError %></strong>
+              </div>
+            <% } %>
             <form
               method="POST"
               action="/recipes/<%= recipe.id %>/steps">
@@ -437,26 +459,15 @@
               <p>
                 <label>
                   Step Number<br>
-                  <input
-                    type="number"
-                    name="step_number"
-                    min="1"
-                    step="1"
-                    value="<%= recipeSteps.length > 0
-                      ? Math.max(...recipeSteps.map(step => step.step_number)) + 1
-                      : 1 %>"
-                    required>
+                  <input type="number" name="step_number" min="1" step="1" value="<%= recipeSteps.length > 0 ? Math.max(...recipeSteps.map(step => step.step_number)) + 1 : 1 %>" required>
                 </label>
               </p>
 
               <p>
                 <label>
                   Instruction<br>
-                  <textarea
-                    name="instruction"
-                    rows="4"
-                    required
-                    placeholder="Describe what to do in this step"></textarea>
+                  <textarea name="instruction" rows="4" required placeholder="Describe what to do in this step">
+                  </textarea>
                 </label>
               </p>
 
@@ -478,6 +489,23 @@
   <script>
   document.addEventListener("DOMContentLoaded", () => {
     const hash = window.location.hash;
+
+    // Open the specific Edit Ingredient form after validation fails
+    if (/^#edit-\d+$/.test(hash)) {
+      const editRow = document.getElementById(hash.slice(1));
+
+      if (editRow) {
+        editRow.hidden = false;
+      }
+    }
+    // Open the specific Edit Step form after validation fails
+    if (hash.startsWith("#step-edit-")) {
+      const editForm = document.getElementById(hash.slice(1));
+
+      if (editForm) {
+        editForm.hidden = false;
+      }
+    }
 
     // Expand the form that was just used.
     if (hash === "#add-ingredient") {

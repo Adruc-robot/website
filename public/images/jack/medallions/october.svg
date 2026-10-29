@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-labelledby="title">
+<title id="title">October pumpkin medallion</title>
+<defs>
+ <radialGradient id="gold"><stop stop-color="#f6d88b"/><stop offset=".72" stop-color="#c58b37"/><stop offset="1" stop-color="#6d451f"/></radialGradient>
+ <linearGradient id="bronze" x2=".9" y2="1"><stop stop-color="#78502d"/><stop offset="1" stop-color="#281e19"/></linearGradient>
+</defs>
+<circle cx="60" cy="60" r="55" fill="#261a13" stroke="#22170f" stroke-width="3"/>
+<circle cx="60" cy="60" r="51" fill="url(#gold)" stroke="#f7d88b" stroke-width="2"/>
+<circle cx="60" cy="60" r="42" fill="url(#bronze)" stroke="#4c301b" stroke-width="2"/>
+<circle cx="60" cy="60" r="39" fill="none" stroke="#d8a65a" stroke-width="1.5" stroke-dasharray="2 3"/>
+<g stroke="#4b2816" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+<path d="M58 40 Q56 30 64 27 Q66 34 62 42" fill="#77904a"/>
+<path d="M59 41 C42 32 29 46 32 64 C34 83 47 91 60 85 C73 91 86 83 88 64 C91 46 78 32 61 41Z" fill="#d97827"/>
+<path d="M51 43 Q38 60 51 83 M69 43 Q82 60 69 83 M60 42 Q56 64 60 85" fill="none" stroke="#9c491d" stroke-width="2.5"/>
+<path d="M42 59 L53 55 L50 66 Z M78 59 L67 55 L70 66 Z" fill="#251a15" stroke="none"/>
+<path d="M47 72 Q60 83 73 72 L68 70 L64 74 L60 70 L56 74 L52 70 Z" fill="#251a15" stroke="none"/>
+</g>
+<path d="M23 43 Q29 27 46 22" fill="none" stroke="#fff0bd" stroke-width="3" stroke-linecap="round" opacity=".7"/>
+</svg>

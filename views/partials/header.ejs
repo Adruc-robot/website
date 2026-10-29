@@ -3,12 +3,17 @@
 
   <nav class="site-nav">
     <a class="<%= activePage === 'home' ? 'active' : '' %>" href="/">Home</a>
-    <a class="<%= activePage === 'calendar' ? 'active' : '' %>" href="/calendar">Calendar</a>
+    <a class="<%= activePage === 'time-lapse' ? 'active' : '' %>" href="/timelapse">Time-lapse</a>
     <a href="#">Photography</a>
-    <a href="#">Projects</a>
-    <% if (currentUser) { %>
-      <a class="<%= activePage === 'locations' ? 'active' : '' %>" href="/locations">Locations</a>
-    <% } %>
+    <a class="<%= activePage === 'locations' ? 'active' : '' %>" href="/locations">Locations</a>
+    <details class="nav-dropdown">
+      <summary>Projects</summary>
+
+      <div class="nav-dropdown-menu">
+        <a href="/recipes">Recipes</a>
+        <a href="/timelapse">Time-lapse</a>
+      </div>
+</details>
     <a href="#">About</a>
   </nav>
 </header>

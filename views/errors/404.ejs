@@ -1,0 +1,43 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include("../partials/head") %>
+</head>
+<body>
+  <%- include("../partials/header") %>
+  
+  <main class="page error-page">
+    <section class="error-container">
+
+        <h1 class="error-title">404 — Page Not Found</h1>
+
+        <div class="error-content">
+
+          <div class="jack-illustration">
+            <img src="/public/images/jack/poses/confused.webp" alt="A confused jackass holding an upside-down map" class="jack-pose">
+            <img src="/public/images/jack/medallions/<%= medallion %>.svg" alt="" class="jack-medallion jack-medallion--confused">
+          </div>
+
+          <div class="error-message">
+            <h2>Well, this isn't where I thought we were going.</h2>
+
+            <p>
+                The page you're looking for doesn't exist.
+                Either you took a wrong turn, or Jack did.
+                We're betting on Jack.
+            </p>
+
+            <p>
+                <a href="/">Take me home</a>
+            </p>
+          </div>
+
+        </div>
+
+    </section>
+  </main>
+
+  <%- include("../partials/footer") %>
+</body>
+</html>

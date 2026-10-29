@@ -34,7 +34,7 @@
           </a>
         <% } %>
 
-        <% if (isGlobal && Number(recipe.user_id) !== Number(currentUser.id)) { %>
+        <% if (currentUser && isGlobal && Number(recipe.user_id) !== Number(currentUser?.id)) { %>
           <form
             method="POST"
             action="/recipes/<%= recipe.id %>/copy"

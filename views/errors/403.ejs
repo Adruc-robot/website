@@ -1,0 +1,43 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include("../partials/head") %>
+</head>
+<body>
+  <%- include("../partials/header") %>
+  
+  <main class="page error-page">
+    <section class="error-container">
+
+        <h1 class="error-title">403 — Forbidden</h1>
+
+        <div class="error-content">
+
+          <div class="jack-illustration">
+            <img src="/public/images/jack/poses/stubborn.webp" alt="A stubborn jackass blocking the path" class="jack-pose">
+            <img src="/public/images/jack/medallions/<%= medallion %>.svg" alt="" class="jack-medallion jack-medallion--stubborn">
+          </div>
+
+          <div class="error-message">
+            <h2>Nope. You're not getting past this jackass.</h2>
+
+            <p>
+                You don't have permission to access this page.
+                If you think you should, try logging in or
+                contacting the site administrator.
+            </p>
+
+            <p>
+                <a href="/">Take me home</a>
+            </p>
+          </div>
+
+        </div>
+
+    </section>
+  </main>
+
+  <%- include("../partials/footer") %>
+</body>
+</html>

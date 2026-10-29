@@ -11,17 +11,20 @@
     <section class="page-card">
       <h1>Recipes</h1>
 
+      <% if (currentUser) { %>
         <p>
-            <a href="/recipes/new">Add Recipe</a>
+          <a href="/recipes/new">Add Recipe</a>
+          |
+          <a href="/ingredients">Manage Ingredients</a>
+          |
+          <a href="/units">Manage Units</a>
+
+          <% if (currentUser.role === "admin") { %>
             |
-            <a href="/ingredients">Manage Ingredients</a>
-            |
-            <a href="/units">Manage Units</a>
-            <% if (currentUser && currentUser.role === "admin") { %>
-              |
-              <a href="/recipes/import">Import Recipe</a>
-            <% } %>
+            <a href="/recipes/import">Import Recipe</a>
+          <% } %>
         </p>
+      <% } %>
 
       <table class="datatable">
         <thead>
@@ -67,10 +70,11 @@
               </td>
 
               <td>
-                <% if (
-                  Number(recipe.user_id) === Number(userId) ||
-                  (currentUser.role === "admin" &&
-                   Number(recipe.user_id) === Number(globalUserId))
+              <% if (
+                  (currentUser &&
+                  Number(recipe.user_id) === Number(currentUser.id)) ||
+                  (currentUser?.role === "admin" &&
+                  Number(recipe.user_id) === Number(globalUserId))
                 ) { %>
                   <a href="/recipes/<%= recipe.id %>/edit"
                      title="Edit Recipe">

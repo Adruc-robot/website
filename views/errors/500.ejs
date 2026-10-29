@@ -1,0 +1,43 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include("../partials/head") %>
+</head>
+<body>
+  <%- include("../partials/header") %>
+
+  <main class="page error-page">
+    <section class="error-container">
+
+      <h1 class="error-title">500 — Internal Server Error</h1>
+
+      <div class="error-content">
+
+        <div class="jack-illustration">
+          <img src="/public/images/jack/poses/alarmed.webp" alt="A panicked jackass beside a smoking server and tangled cables" class="jack-pose">
+          <img src="/public/images/jack/medallions/<%= medallion %>.svg" alt="" class="jack-medallion jack-medallion--alarmed">
+        </div>
+
+        <div class="error-message">
+          <h2>Apparently, we let the jackass touch the server.</h2>
+
+          <p>
+            Something went spectacularly wrong.
+            We're working on it. Jack has been
+            relieved of his technical duties.
+          </p>
+
+          <p>
+            <a href="/">Take me home</a>
+          </p>
+        </div>
+
+      </div>
+
+    </section>
+  </main>
+
+  <%- include("../partials/footer") %>
+</body>
+</html>

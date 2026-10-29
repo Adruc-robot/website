@@ -10,6 +10,7 @@ const timelapseApiRouter = require("./routes/api/timelapse");
 const session = require("express-session");
 
 const bootstrapAdmin = require("./services/bootstrapAdmin");
+const jackMedallion = require("./middleware/jackMedallion");
 
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
@@ -49,6 +50,7 @@ app.use((req, res, next) => {
   next();
 });
 
+app.use(jackMedallion);
 app.use("/", homeRoutes);
 app.use("/login", authRoutes);
 app.use("/locations", locationsRoutes);
@@ -67,6 +69,36 @@ app.get("/calendar", (req, res) => {
 app.use("/api/captures", captureApiRouter);
 
 app.use("/api/timelapse", timelapseApiRouter);
+
+// Handle forbidden routes (403)
+app.use((req, res) => {
+  res.status(403).render("errors/403", {
+    title: "403 — Forbidden",
+    activePage: null
+  });
+});
+
+// Handle unknown routes (404)
+app.use((req, res) => {
+  res.status(404).render("errors/404", {
+    title: "404 — Page Not Found",
+    activePage: null
+  });
+});
+
+// Handle errors (500)
+app.use((err, req, res, next) => {
+  console.error("Application error:", err);
+
+  if (res.headersSent) {
+    return next(err);
+  }
+
+  res.status(500).render("errors/500", {
+    title: "500 — Internal Server Error",
+    activePage: null
+  });
+});
 
 async function initializeApplication() {
     try {

@@ -4,13 +4,14 @@ const GLOBAL_USER_ID = 1;
 const { randomUUID } = require("crypto");
 
 //
-// List recipes belonging to the current user
+// List recipes visible to the current visitor
 //
-async function all(userId) {
+async function all(userId = null) {
   const [rows] = await db.query(`
     SELECT *
     FROM recipes
-    WHERE user_id IN (?, ?)
+    WHERE user_id = ?
+       OR user_id = ?
     ORDER BY title
   `, [GLOBAL_USER_ID, userId]);
 
@@ -18,14 +19,14 @@ async function all(userId) {
 }
 
 //
-// Find a recipe belonging to the current user
+// Find a recipe visible to the current visitor
 //
-async function find(id, userId) {
+async function find(id, userId = null) {
   const [rows] = await db.query(`
     SELECT *
     FROM recipes
     WHERE id = ?
-      AND user_id IN (?, ?)
+      AND (user_id = ? OR user_id = ?)
   `, [id, GLOBAL_USER_ID, userId]);
 
   return rows[0] || null;

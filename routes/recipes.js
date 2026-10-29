@@ -16,7 +16,6 @@ const { validateRecipeImport } = require("../services/recipeImportValidation");
 
 const GLOBAL_USER_ID = 1;
 
-
 const recipeUpload = multer({
   storage: multer.memoryStorage(),
   limits: {
@@ -34,13 +33,90 @@ const recipeUpload = multer({
   }
 });
 
+//
+// Public routes
+//
+
+//
+// List recipes
+//
+router.get("/", async (req, res, next) => {
+  try {
+    const userId = req.session.user?.id ?? null;
+
+    const recipes = await Recipe.all(userId);
+
+    res.render("recipes/index", {
+      title: "Recipes",
+      activePage: "recipes",
+      recipes,
+      userId,
+      globalUserId: GLOBAL_USER_ID,
+    });
+  } catch (error) {
+    console.error("Error loading recipes:", error);
+    return next(error);
+  }
+});
+
+//
+// Display a recipe (read-only)
+//
+router.get("/:id", async (req, res, next) => {
+  if (!/^\d+$/.test(req.params.id)) {
+    return next("route");
+  }  
+  try {
+    const userId = req.session.user?.id ?? null;
+    const isAdmin = req.session.user?.role === "admin";
+
+    const recipe = await Recipe.find(req.params.id, userId);
+
+    if (!recipe) {
+      return res.status(404).render("errors/404", {
+        title: "404 — Recipe Not Found",
+        activePage: null
+      });
+    }
+
+    const recipeIngredients = await RecipeIngredient.all(recipe.id);
+    const recipeSteps = await RecipeStep.all(recipe.id);
+
+    const isOwner =
+      userId !== null &&
+      Number(recipe.user_id) === Number(userId);
+
+    const isGlobal =
+      Number(recipe.user_id) === GLOBAL_USER_ID;
+
+    const canEdit = isOwner || (isAdmin && isGlobal);
+
+    res.render("recipes/show", {
+      title: recipe.title,
+      activePage: "recipes",
+      recipe,
+      recipeIngredients,
+      recipeSteps,
+      canEdit,
+      isGlobal,
+    });
+
+  } catch (error) {
+    console.error("Error loading recipe:", error);
+    return next(error);
+  }
+});
+
 router.use(requireLogin);
 //
 // Import get
 //
 router.get("/import", (req, res) => {
   if (req.session.user.role !== "admin") {
-    return res.status(403).send("Forbidden");
+    return res.status(403).render("errors/403", {
+      title: "403 — Forbidden",
+      activePage: null
+    });
   }
 
   res.render("recipes/import", {
@@ -54,10 +130,13 @@ router.get("/import", (req, res) => {
 //
 // Import post
 //
-router.post("/import", (req, res, next) => {
+router.post("/import", (req, res) => {
   // Check permissions before processing the upload.
   if (req.session.user.role !== "admin") {
-    return res.status(403).send("Forbidden");
+    return res.status(403).render("errors/403", {
+      title: "403 — Forbidden",
+      activePage: null
+    });
   }
 
   recipeUpload.single("recipeFile")(req, res, async (uploadError) => {
@@ -119,24 +198,6 @@ router.post("/import", (req, res, next) => {
 });
 
 //
-// List recipes
-//
-router.get("/", async (req, res) => {
-  const userId = req.session.user.id;
-
-  const recipes = await Recipe.all(userId);
-
-  res.render("recipes/index", {
-    title: "Recipes",
-    activePage: "recipes",
-    recipes,
-    userId,
-    globalUserId: GLOBAL_USER_ID,
-  });
-});
-
-
-//
 // New Recipe Form
 //
 router.get("/new", (req, res) => {
@@ -181,9 +242,15 @@ router.post("/", async (req, res) => {
   const result = validateRecipe(req.body);
 
   if (!result.valid) {
-    return res.status(400).send(
-      result.errors.join("\n")
-    );
+    return res.status(400).render("recipes/form", {
+      title: "New Recipe",
+      activePage: "recipes",
+      recipe: req.body,
+      action: "/recipes",
+      isAdmin,
+      globalUserId: GLOBAL_USER_ID,
+      errors: result.errors
+    });
   }
 
   //
@@ -193,7 +260,6 @@ router.post("/", async (req, res) => {
 
   res.redirect("/recipes");
 });
-
 
 //
 // Edit Recipe Form
@@ -205,7 +271,10 @@ router.get("/:id/edit", async (req, res) => {
   const recipe = await Recipe.find(req.params.id, userId);
 
   if (!recipe) {
-    return res.status(404).send("Recipe not found.");
+    return res.status(404).render("errors/404", {
+      title: "404 — Recipe Not Found",
+      activePage: null
+    });
   }
 
   //
@@ -215,7 +284,10 @@ router.get("/:id/edit", async (req, res) => {
   const isGlobal = Number(recipe.user_id) === GLOBAL_USER_ID;
 
   if (!isOwner && !(isAdmin && isGlobal)) {
-    return res.status(403).send("Forbidden");
+    return res.status(403).render("errors/403", {
+      title: "403 — Forbidden",
+      activePage: null
+    });
   }
 
   //
@@ -225,6 +297,26 @@ router.get("/:id/edit", async (req, res) => {
   const ingredients = await Ingredient.allActive(userId);
   const units = await Unit.allActive(userId);
   const recipeSteps = await RecipeStep.all(recipe.id);
+
+  //
+  // Retrieve and clear ingredient validation error
+  //
+  const ingredientError = req.session.ingredientError || null;
+  delete req.session.ingredientError;
+  const stepError = req.session.stepError || null;
+  delete req.session.stepError;
+
+  //
+  // Retrieve and clear Edit Step validation error
+  //
+  const stepEditError = req.session.stepEditError || null;
+  delete req.session.stepEditError;
+
+  //
+  // Retrieve and clear Edit Ingredient validation error
+  //
+  const ingredientEditError = req.session.ingredientEditError || null;
+  delete req.session.ingredientEditError;
 
   res.render("recipes/form", {
     title: "Edit Recipe",
@@ -237,6 +329,10 @@ router.get("/:id/edit", async (req, res) => {
     ingredients,
     units,
     recipeSteps,
+    ingredientError,
+    ingredientEditError,
+    stepError,
+    stepEditError
   });
 });
 
@@ -250,7 +346,10 @@ router.post("/:id", async (req, res) => {
   const existing = await Recipe.find(req.params.id, userId);
 
   if (!existing) {
-    return res.status(404).send("Recipe not found.");
+    return res.status(404).render("errors/404", {
+      title: "404 — Recipe Not Found",
+      activePage: null
+    });
   }
 
   //
@@ -260,7 +359,10 @@ router.post("/:id", async (req, res) => {
   const isGlobal = Number(existing.user_id) === GLOBAL_USER_ID;
 
   if (!isOwner && !(isAdmin && isGlobal)) {
-    return res.status(403).send("Forbidden");
+    return res.status(403).render("errors/403", {
+      title: "403 — Forbidden",
+      activePage: null
+    });
   }
 
   //
@@ -269,9 +371,29 @@ router.post("/:id", async (req, res) => {
   const result = validateRecipe(req.body);
 
   if (!result.valid) {
-    return res.status(400).send(
-      result.errors.join("\n")
-    );
+    
+    const recipeIngredients = await RecipeIngredient.all(existing.id);
+    const recipeSteps = await RecipeStep.all(existing.id);
+    const ingredients = await Ingredient.all(userId);
+    const units = await Unit.all(userId);
+    
+    return res.status(400).render("recipes/form", {
+      title: "Edit Recipe",
+      activePage: "recipes",
+      recipe: {
+        ...existing,
+        ...req.body,
+        id: existing.id
+      },
+      action: `/recipes/${existing.id}`,
+      isAdmin,
+      globalUserId: GLOBAL_USER_ID,
+      errors: result.errors,
+      recipeIngredients,
+      recipeSteps,
+      ingredients,
+      units
+    });
   }
 
   //
@@ -284,17 +406,19 @@ router.post("/:id", async (req, res) => {
   );
 
   if (!updated) {
-    return res.status(404).send("Recipe not found.");
+    return res.status(404).render("errors/404", {
+      title: "404 — Recipe Not Found",
+      activePage: null
+    });
   }
 
   res.redirect("/recipes");
 });
 
-
 //
 // Add an ingredient to an existing recipe
 //
-router.post("/:id/ingredients", async (req, res) => {
+router.post("/:id/ingredients", async (req, res, next) => {
   try {
     const userId = req.session.user.id;
     const isAdmin = req.session.user.role === "admin";
@@ -305,15 +429,26 @@ router.post("/:id/ingredients", async (req, res) => {
     const recipe = await Recipe.find(req.params.id, userId);
 
     if (!recipe) {
-      return res.status(404).send("Recipe not found.");
+      return res.status(404).render("errors/404", {
+        title: "404 — Recipe Not Found",
+        activePage: null
+      });
     }
 
     const isOwner = Number(recipe.user_id) === Number(userId);
     const isGlobal = Number(recipe.user_id) === GLOBAL_USER_ID;
 
     if (!isOwner && !(isAdmin && isGlobal)) {
-      return res.status(403).send("Forbidden");
+      return res.status(403).render("errors/403", {
+        title: "403 — Forbidden",
+        activePage: null
+      });
     }
+
+    const ingredientError = (message) => {
+      req.session.ingredientError = message;
+      return res.redirect(303, `/recipes/${recipe.id}/edit#add-ingredient`);
+    };
 
     //
     // Validate ingredient
@@ -321,7 +456,7 @@ router.post("/:id/ingredients", async (req, res) => {
     const ingredientId = Number(req.body.ingredient_id);
 
     if (!Number.isSafeInteger(ingredientId) || ingredientId <= 0) {
-      return res.status(400).send("Invalid ingredient.");
+      return ingredientError("Invalid ingredient.");
     }
 
     const selectedIngredient = await Ingredient.find(
@@ -330,9 +465,7 @@ router.post("/:id/ingredients", async (req, res) => {
     );
 
     if (!selectedIngredient || !Number(selectedIngredient.active)) {
-      return res.status(400).send(
-        "Ingredient not found or inactive."
-      );
+      return ingredientError("Ingredient not found or inactive.");
     }
 
     //
@@ -345,15 +478,13 @@ router.post("/:id/ingredients", async (req, res) => {
       unitId = Number(req.body.unit_id);
 
       if (!Number.isSafeInteger(unitId) || unitId <= 0) {
-        return res.status(400).send("Invalid unit.");
+        return ingredientError("Invalid unit.");
       }
 
       selectedUnit = await Unit.find(unitId, userId);
 
       if (!selectedUnit || !Number(selectedUnit.active)) {
-        return res.status(400).send(
-          "Unit not found or inactive."
-        );
+        return ingredientError("Unit not found or inactive.");
       }
     }
 
@@ -362,16 +493,12 @@ router.post("/:id/ingredients", async (req, res) => {
     //
     if (isGlobal) {
       if (Number(selectedIngredient.user_id) !== GLOBAL_USER_ID) {
-        return res.status(400).send(
-          "Stock recipes require global ingredients."
-        );
+        return ingredientError("Stock recipes require global ingredients.");
       }
 
       if (selectedUnit &&
           Number(selectedUnit.user_id) !== GLOBAL_USER_ID) {
-        return res.status(400).send(
-          "Stock recipes require global units."
-        );
+        return ingredientError("Stock recipes require global units.");
       }
     }
 
@@ -388,9 +515,7 @@ router.post("/:id/ingredients", async (req, res) => {
          quantity <= 0 ||
          quantity >= 10000000 ||
          Math.round(quantity * 1000) !== quantity * 1000)) {
-      return res.status(400).send(
-        "Quantity must be positive, with at most 3 decimal places."
-      );
+      return ingredientError("Quantity must be positive, with at most 3 decimal places.");
     }
 
     //
@@ -400,15 +525,13 @@ router.post("/:id/ingredients", async (req, res) => {
 
     if (!Number.isSafeInteger(sortOrder) || sortOrder < 0 ||
         sortOrder > 4294967295) {
-      return res.status(400).send("Invalid sort order.");
+      return ingredientError("Invalid sort order.");
     }
 
     const preparation = (req.body.preparation || "").trim();
 
     if (preparation.length > 255) {
-      return res.status(400).send(
-        "Preparation must be 255 characters or fewer."
-      );
+      return ingredientError("Preparation must be 255 characters or fewer.");
     }
 
     //
@@ -426,15 +549,14 @@ router.post("/:id/ingredients", async (req, res) => {
 
   } catch (error) {
     console.error("Error adding recipe ingredient:", error);
-    res.status(500).send("Unable to add recipe ingredient.");
+    return next(error);
   }
 });
-
 
 //
 // Remove an ingredient from a recipe
 //
-router.post("/:id/ingredients/:ingredientRowId/delete", async (req, res) => {
+router.post("/:id/ingredients/:ingredientRowId/delete", async (req, res, next) => {
   try {
     const userId = req.session.user.id;
     const isAdmin = req.session.user.role === "admin";
@@ -445,7 +567,10 @@ router.post("/:id/ingredients/:ingredientRowId/delete", async (req, res) => {
     const recipe = await Recipe.find(req.params.id, userId);
 
     if (!recipe) {
-      return res.status(404).send("Recipe not found.");
+      return res.status(404).render("errors/404", {
+        title: "404 — Recipe Not Found",
+        activePage: null
+      });
     }
 
     //
@@ -455,7 +580,10 @@ router.post("/:id/ingredients/:ingredientRowId/delete", async (req, res) => {
     const isGlobal = Number(recipe.user_id) === GLOBAL_USER_ID;
 
     if (!isOwner && !(isAdmin && isGlobal)) {
-      return res.status(403).send("Forbidden");
+      return res.status(403).render("errors/403", {
+        title: "403 — Forbidden",
+        activePage: null
+      });
     }
 
     //
@@ -476,22 +604,24 @@ router.post("/:id/ingredients/:ingredientRowId/delete", async (req, res) => {
     );
 
     if (!removed) {
-      return res.status(404).send("Recipe ingredient not found.");
+      return res.status(404).render("errors/404", {
+        title: "404 — Recipe Ingredient Not Found.",
+        activePage: null
+      });
     }
 
     res.redirect(`/recipes/${recipe.id}/edit#add-ingredient`);
 
   } catch (error) {
     console.error("Error removing recipe ingredient:", error);
-    res.status(500).send("Unable to remove recipe ingredient.");
+    return next(error);
   }
 });
-
 
 //
 // Update an ingredient already attached to a recipe
 //
-router.post("/:id/ingredients/:ingredientRowId", async (req, res) => {
+router.post("/:id/ingredients/:ingredientRowId", async (req, res, next) => {
   try {
     const userId = req.session.user.id;
     const isAdmin = req.session.user.role === "admin";
@@ -499,28 +629,49 @@ router.post("/:id/ingredients/:ingredientRowId", async (req, res) => {
     const recipe = await Recipe.find(req.params.id, userId);
 
     if (!recipe) {
-      return res.status(404).send("Recipe not found.");
+      return res.status(404).render("errors/404", {
+        title: "404 — Recipe Not Found",
+        activePage: null
+      });
     }
 
     const isOwner = Number(recipe.user_id) === Number(userId);
     const isGlobal = Number(recipe.user_id) === GLOBAL_USER_ID;
 
     if (!isOwner && !(isAdmin && isGlobal)) {
-      return res.status(403).send("Forbidden");
+      return res.status(403).render("errors/403", {
+        title: "403 — Forbidden",
+        activePage: null
+      });
     }
+
+    //
+    // Store validation error for the specific ingredient being edited
+    //
+    const ingredientEditError = (message) => {
+      req.session.ingredientEditError = {
+        ingredientRowId: Number(req.params.ingredientRowId),
+        message
+      };
+
+      return res.redirect(
+        303,
+        `/recipes/${recipe.id}/edit#edit-${req.params.ingredientRowId}`
+      );
+    };
 
     const rowId = Number(req.params.ingredientRowId);
     const ingredientId = Number(req.body.ingredient_id);
 
     if (!Number.isSafeInteger(rowId) || rowId <= 0 ||
         !Number.isSafeInteger(ingredientId) || ingredientId <= 0) {
-      return res.status(400).send("Invalid ingredient ID.");
+      return ingredientEditError("Invalid ingredient ID.");
     }
 
     const selectedIngredient = await Ingredient.find(ingredientId, userId);
 
     if (!selectedIngredient || !Number(selectedIngredient.active)) {
-      return res.status(400).send("Ingredient not found or inactive.");
+      return ingredientEditError("Ingredient not found or inactive.");
     }
 
     let unitId = null;
@@ -530,13 +681,13 @@ router.post("/:id/ingredients/:ingredientRowId", async (req, res) => {
       unitId = Number(req.body.unit_id);
 
       if (!Number.isSafeInteger(unitId) || unitId <= 0) {
-        return res.status(400).send("Invalid unit ID.");
+        return ingredientEditError("Invalid unit ID.");
       }
 
       selectedUnit = await Unit.find(unitId, userId);
 
       if (!selectedUnit || !Number(selectedUnit.active)) {
-        return res.status(400).send("Unit not found or inactive.");
+        return ingredientEditError("Unit not found or inactive.");
       }
     }
 
@@ -545,7 +696,7 @@ router.post("/:id/ingredients/:ingredientRowId", async (req, res) => {
       if (Number(selectedIngredient.user_id) !== GLOBAL_USER_ID ||
           (selectedUnit &&
            Number(selectedUnit.user_id) !== GLOBAL_USER_ID)) {
-        return res.status(400).send(
+        return ingredientEditError(
           "Stock recipes require global ingredients and units."
         );
       }
@@ -561,7 +712,7 @@ router.post("/:id/ingredients/:ingredientRowId", async (req, res) => {
          quantity <= 0 ||
          quantity >= 10000000 ||
          Math.round(quantity * 1000) !== quantity * 1000)) {
-      return res.status(400).send("Invalid quantity.");
+      return ingredientEditError("Invalid quantity.");
     }
 
     const sortOrder = Number(req.body.sort_order ?? 0);
@@ -569,13 +720,13 @@ router.post("/:id/ingredients/:ingredientRowId", async (req, res) => {
     if (!Number.isSafeInteger(sortOrder) ||
         sortOrder < 0 ||
         sortOrder > 4294967295) {
-      return res.status(400).send("Invalid sort order.");
+      return ingredientEditError("Invalid sort order.");
     }
 
     const preparation = (req.body.preparation || "").trim();
 
     if (preparation.length > 255) {
-      return res.status(400).send("Preparation is too long.");
+      return ingredientEditError("Preparation is too long.");
     }
 
     const updated = await RecipeIngredient.update(recipe.id, rowId, {
@@ -587,21 +738,24 @@ router.post("/:id/ingredients/:ingredientRowId", async (req, res) => {
     });
 
     if (!updated) {
-      return res.status(404).send("Recipe ingredient not found.");
+      return res.status(404).render("errors/404", {
+        title: "404 — Recipe ingredient not found.",
+        activePage: null
+      });
     }
 
     res.redirect(`/recipes/${recipe.id}/edit#add-ingredient`);
 
   } catch (error) {
     console.error("Error updating recipe ingredient:", error);
-    res.status(500).send("Unable to update recipe ingredient.");
+    return next(error);
   }
 });
 
 //
 // Add a cooking instruction to a recipe
 //
-router.post("/:id/steps", async (req, res) => {
+router.post("/:id/steps", async (req, res, next) => {
   try {
     const userId = req.session.user.id;
     const isAdmin = req.session.user.role === "admin";
@@ -612,15 +766,26 @@ router.post("/:id/steps", async (req, res) => {
     const recipe = await Recipe.find(req.params.id, userId);
 
     if (!recipe) {
-      return res.status(404).send("Recipe not found.");
+      return res.status(404).render("errors/404", {
+        title: "404 — Recipe Not Found",
+        activePage: null
+      });
     }
 
     const isOwner = Number(recipe.user_id) === Number(userId);
     const isGlobal = Number(recipe.user_id) === GLOBAL_USER_ID;
 
     if (!isOwner && !(isAdmin && isGlobal)) {
-      return res.status(403).send("Forbidden");
+      return res.status(403).render("errors/403", {
+        title: "403 — Forbidden",
+        activePage: null
+      });
     }
+
+    const stepError = (message) => {
+      req.session.stepError = message;
+      return res.redirect(303, `/recipes/${recipe.id}/edit#add-step`);
+    };
 
     //
     // Validate step number
@@ -630,9 +795,7 @@ router.post("/:id/steps", async (req, res) => {
     if (!Number.isSafeInteger(stepNumber) ||
         stepNumber <= 0 ||
         stepNumber > 4294967295) {
-      return res.status(400).send(
-        "Step number must be a positive whole number."
-      );
+      return stepError("Step number must be a positive whole number.");
     }
 
     //
@@ -644,9 +807,7 @@ router.post("/:id/steps", async (req, res) => {
         : "";
 
     if (!instruction) {
-      return res.status(400).send(
-        "Instruction is required."
-      );
+      return stepError("Instruction is required.");
     }
 
     //
@@ -657,24 +818,28 @@ router.post("/:id/steps", async (req, res) => {
       instruction,
     });
 
-    res.redirect(`/recipes/${recipe.id}/edit#steps-action`);
+    res.redirect(`/recipes/${recipe.id}/edit#add-step`);
 
   } catch (error) {
     if (error.code === "ER_DUP_ENTRY") {
-      return res.status(400).send(
-        "That step number is already used in this recipe."
+      req.session.stepError =
+        "That step number is already used in this recipe.";
+
+      return res.redirect(
+        303,
+        `/recipes/${req.params.id}/edit#add-step`
       );
     }
 
     console.error("Error adding recipe step:", error);
-    res.status(500).send("Unable to add recipe step.");
+    return next(error);
   }
 });
 
 //
 // Update an existing recipe step
 //
-router.post("/:id/steps/:stepId", async (req, res) => {
+router.post("/:id/steps/:stepId", async (req, res, next) => {
   try {
     const userId = req.session.user.id;
     const isAdmin = req.session.user.role === "admin";
@@ -685,15 +850,33 @@ router.post("/:id/steps/:stepId", async (req, res) => {
     const recipe = await Recipe.find(req.params.id, userId);
 
     if (!recipe) {
-      return res.status(404).send("Recipe not found.");
+      return res.status(404).render("errors/404", {
+        title: "404 — Recipe Not Found",
+        activePage: null
+      });
     }
 
     const isOwner = Number(recipe.user_id) === Number(userId);
     const isGlobal = Number(recipe.user_id) === GLOBAL_USER_ID;
 
     if (!isOwner && !(isAdmin && isGlobal)) {
-      return res.status(403).send("Forbidden");
+      return res.status(403).render("errors/403", {
+        title: "403 — Forbidden",
+        activePage: null
+      });
     }
+
+    const stepError = (message) => {
+      req.session.stepEditError = {
+        stepId: Number(req.params.stepId),
+        message
+      };
+
+      return res.redirect(
+        303,
+        `/recipes/${recipe.id}/edit#step-edit-${req.params.stepId}`
+      );
+    };
 
     //
     // Validate step ID and step number
@@ -702,13 +885,13 @@ router.post("/:id/steps/:stepId", async (req, res) => {
     const stepNumber = Number(req.body.step_number);
 
     if (!Number.isSafeInteger(stepId) || stepId <= 0) {
-      return res.status(400).send("Invalid step ID.");
+      return stepError("Invalid step ID.");
     }
 
     if (!Number.isSafeInteger(stepNumber) ||
         stepNumber <= 0 ||
         stepNumber > 4294967295) {
-      return res.status(400).send(
+      return stepError(
         "Step number must be a positive whole number."
       );
     }
@@ -722,7 +905,7 @@ router.post("/:id/steps/:stepId", async (req, res) => {
         : "";
 
     if (!instruction) {
-      return res.status(400).send("Instruction is required.");
+      return stepError("Instruction is required.");
     }
 
     //
@@ -734,27 +917,36 @@ router.post("/:id/steps/:stepId", async (req, res) => {
     });
 
     if (!updated) {
-      return res.status(404).send("Recipe step not found.");
+      return res.status(404).render("errors/404", {
+        title: "404 — Recipe Step Not Found",
+        activePage: null
+      });
     }
 
-    res.redirect(`/recipes/${recipe.id}/edit#steps-action`);
+    res.redirect(`/recipes/${recipe.id}/edit#steps-section`);
 
   } catch (error) {
     if (error.code === "ER_DUP_ENTRY") {
-      return res.status(400).send(
-        "That step number is already used in this recipe."
+      req.session.stepEditError = {
+        stepId: Number(req.params.stepId),
+        message: "That step number is already used in this recipe."
+      };
+
+      return res.redirect(
+        303,
+        `/recipes/${req.params.id}/edit#step-edit-${req.params.stepId}`
       );
     }
 
     console.error("Error updating recipe step:", error);
-    res.status(500).send("Unable to update recipe step.");
+    return next(error);
   }
 });
 
 //
 // Delete a recipe step
 //
-router.post("/:id/steps/:stepId/delete", async (req, res) => {
+router.post("/:id/steps/:stepId/delete", async (req, res, next) => {
   try {
     const userId = req.session.user.id;
     const isAdmin = req.session.user.role === "admin";
@@ -765,14 +957,20 @@ router.post("/:id/steps/:stepId/delete", async (req, res) => {
     const recipe = await Recipe.find(req.params.id, userId);
 
     if (!recipe) {
-      return res.status(404).send("Recipe not found.");
+      return res.status(404).render("errors/404", {
+        title: "404 — Recipe Not Found",
+        activePage: null
+      });
     }
 
     const isOwner = Number(recipe.user_id) === Number(userId);
     const isGlobal = Number(recipe.user_id) === GLOBAL_USER_ID;
 
     if (!isOwner && !(isAdmin && isGlobal)) {
-      return res.status(403).send("Forbidden");
+      return res.status(403).render("errors/403", {
+        title: "403 — Forbidden",
+        activePage: null
+      });
     }
 
     //
@@ -790,21 +988,24 @@ router.post("/:id/steps/:stepId/delete", async (req, res) => {
     const removed = await RecipeStep.remove(recipe.id, stepId);
 
     if (!removed) {
-      return res.status(404).send("Recipe step not found.");
+      return res.status(404).render("errors/404", {
+        title: "404 — Recipe Step Not Found",
+        activePage: null
+      });
     }
 
-    res.redirect(`/recipes/${recipe.id}/edit#steps-action`);
+    res.redirect(`/recipes/${recipe.id}/edit#steps-section`);
 
   } catch (error) {
     console.error("Error deleting recipe step:", error);
-    res.status(500).send("Unable to delete recipe step.");
+    return next(error);
   }
 });
 
 //
 // Move a cooking instruction up or down
 //
-router.post("/:id/steps/:stepId/move", async (req, res) => {
+router.post("/:id/steps/:stepId/move", async (req, res, next) => {
   try {
     const userId = req.session.user.id;
     const isAdmin = req.session.user.role === "admin";
@@ -815,14 +1016,20 @@ router.post("/:id/steps/:stepId/move", async (req, res) => {
     const recipe = await Recipe.find(req.params.id, userId);
 
     if (!recipe) {
-      return res.status(404).send("Recipe not found.");
+      return res.status(404).render("errors/404", {
+        title: "404 — Recipe Not Found",
+        activePage: null
+      });
     }
 
     const isOwner = Number(recipe.user_id) === Number(userId);
     const isGlobal = Number(recipe.user_id) === GLOBAL_USER_ID;
 
     if (!isOwner && !(isAdmin && isGlobal)) {
-      return res.status(403).send("Forbidden");
+      return res.status(403).render("errors/403", {
+        title: "403 — Forbidden",
+        activePage: null
+      });
     }
 
     //
@@ -854,70 +1061,18 @@ router.post("/:id/steps/:stepId/move", async (req, res) => {
       );
     }
 
-    res.redirect(`/recipes/${recipe.id}/edit#steps-action`);
+    res.redirect(`/recipes/${recipe.id}/edit#steps-section`);
 
   } catch (error) {
     console.error("Error moving recipe step:", error);
-    res.status(500).send("Unable to move recipe step.");
+    return next(error);
   }
 });
-
-//
-// Display a recipe (read-only)
-//
-router.get("/:id", async (req, res) => {
-  try {
-    const userId = req.session.user.id;
-    const isAdmin = req.session.user.role === "admin";
-
-    //
-    // Find recipe (global or owned by user)
-    //
-    const recipe = await Recipe.find(req.params.id, userId);
-
-    if (!recipe) {
-      return res.status(404).send("Recipe not found.");
-    }
-
-    //
-    // Load ingredients and cooking instructions
-    //
-    const recipeIngredients = await RecipeIngredient.all(recipe.id);
-    const recipeSteps = await RecipeStep.all(recipe.id);
-
-    //
-    // Determine whether the user can edit this recipe
-    //
-    const isOwner = Number(recipe.user_id) === Number(userId);
-    const isGlobal = Number(recipe.user_id) === GLOBAL_USER_ID;
-
-    const canEdit = isOwner || (isAdmin && isGlobal);
-
-    //
-    // Render read-only recipe page
-    //
-    res.render("recipes/show", {
-      title: recipe.title,
-      activePage: "recipes",
-      recipe,
-      recipeIngredients,
-      recipeSteps,
-      canEdit,
-      isGlobal,
-    });
-
-  } catch (error) {
-    console.error("Error loading recipe:", error);
-    res.status(500).send("Unable to load recipe.");
-  }
-});
-
-
 
 //
 // Copy a stock recipe into the user's personal recipes
 //
-router.post("/:id/copy", async (req, res) => {
+router.post("/:id/copy", async (req, res, next) => {
   try {
     const userId = req.session.user.id;
     const recipeId = Number(req.params.id);
@@ -931,7 +1086,10 @@ router.post("/:id/copy", async (req, res) => {
     const newRecipeId = await Recipe.copyStockRecipe(recipeId, userId);
 
     if (!newRecipeId) {
-      return res.status(404).send("Stock recipe not found.");
+      return res.status(404).render("errors/404", {
+        title: "404 — Stock Recipe Not Found",
+        activePage: null
+      });
     }
 
     // Open the new personal recipe.
@@ -939,15 +1097,14 @@ router.post("/:id/copy", async (req, res) => {
 
   } catch (error) {
     console.error("Error copying stock recipe:", error);
-    res.status(500).send("Unable to copy stock recipe.");
+    return next(error);
   }
 });
-
 
 //
 // Delete a recipe
 //
-router.post("/:id/delete", async (req, res) => {
+router.post("/:id/delete", async (req, res, next) => {
   try {
     const userId = req.session.user.id;
     const isAdmin = req.session.user.role === "admin";
@@ -962,9 +1119,10 @@ router.post("/:id/delete", async (req, res) => {
     const deleted = await Recipe.remove(recipeId, userId, isAdmin);
 
     if (!deleted) {
-      return res.status(404).send(
-        "Recipe not found or you do not have permission to delete it."
-      );
+      return res.status(404).render("errors/404", {
+        title: "404 — Recipe not found or you do not have permission to delete it.",
+        activePage: null
+      });
     }
 
     // Return to the recipe list.
@@ -972,18 +1130,21 @@ router.post("/:id/delete", async (req, res) => {
 
   } catch (error) {
     console.error("Error deleting recipe:", error);
-    res.status(500).send("Unable to delete recipe.");
+    return next(error);
   }
 });
 
 //
 // Export a global recipe as JSON (admin only)
 //
-router.get("/:id/export", async (req, res) => {
+router.get("/:id/export", async (req, res, next) => {
   try {
     // Only administrators can export recipes.
     if (req.session.user.role !== "admin") {
-      return res.status(403).send("Forbidden");
+      return res.status(403).render("errors/403", {
+        title: "403 — Forbidden",
+        activePage: null
+      });
     }
 
     const recipeId = Number(req.params.id);
@@ -996,7 +1157,10 @@ router.get("/:id/export", async (req, res) => {
     const exportData = await RecipeExport.getExportData(recipeId);
 
     if (!exportData) {
-      return res.status(404).send("Global recipe not found.");
+      return res.status(404).render("errors/404", {
+        title: "404 — Global Recipe Not Found",
+        activePage: null
+      });
     }
 
     // Build a safe filename from the recipe title.
@@ -1013,7 +1177,7 @@ router.get("/:id/export", async (req, res) => {
 
   } catch (error) {
     console.error("Error exporting recipe:", error);
-    res.status(500).send("Unable to export recipe.");
+    return next(error);
   }
 });
 
