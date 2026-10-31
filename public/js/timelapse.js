@@ -24,6 +24,20 @@ let playerPlayButton = null;
 let playbackTimer = null;
 let isPlaying = false;
 
+let lightbox = null;
+let lightboxImage = null;
+let lightboxInfo = null;
+let lightboxOpen = false;
+let lightboxScale = 1;
+let lightboxPanX = 0;
+let lightboxPanY = 0;
+let lightboxDragging = false;
+let lightboxDragX = 0;
+let lightboxDragY = 0;
+let lightboxPreviousOverflow = "";
+
+const expandedTelemetrySections = new Set();
+
 function startOfWeek(date) {
   const start = new Date(
     date.getFullYear(),
@@ -411,6 +425,13 @@ function renderFrame() {
   playerImage = document.createElement("img");
   playerImage.className = "timelapse-player-image";
   playerImage.alt = `Time-lapse frame for ${selectedDate}`;
+  playerImage.style.cursor = "zoom-in";
+  playerImage.title = "View full-resolution image";
+
+  playerImage.addEventListener("click", () => {
+    stopPlayback();
+    openLightbox();
+  });
 
   // Frame information
   playerInfo = document.createElement("div");
@@ -707,3 +728,637 @@ renderMonth().catch(error => {
   document.getElementById("timelapseStatus").textContent =
     "Unable to load time-lapse calendar.";
 });
+
+//
+// Full-resolution image viewer
+//
+function openLightbox() {
+  if (!dayImages.length) return;
+
+  lightbox = document.createElement("div");
+  lightbox.className = "timelapse-lightbox";
+
+  lightbox.innerHTML = `
+    <button class="timelapse-lightbox-close" type="button"
+      aria-label="Close viewer">×</button>
+
+    <button class="timelapse-lightbox-prev" type="button"
+      aria-label="Previous image">←</button>
+
+    <img class="timelapse-lightbox-image" alt="Full-resolution capture">
+
+    <button class="timelapse-lightbox-next" type="button"
+      aria-label="Next image">→</button>
+
+    <div class="timelapse-lightbox-info"></div>
+
+    <div class="timelapse-telemetry-panel">
+      <div class="timelapse-telemetry-header">
+        <span class="timelapse-telemetry-drag-handle"
+              title="Drag telemetry panel">⠿</span>
+
+        <span class="timelapse-telemetry-title">
+          Capture Telemetry
+        </span>
+
+        <button class="timelapse-telemetry-toggle"
+                type="button"
+                aria-label="Collapse telemetry"
+                aria-expanded="true">−</button>
+      </div>
+
+      <div class="timelapse-telemetry-content">
+        Select an image to view telemetry.
+      </div>
+    </div>
+  `;
+
+  lightboxPreviousOverflow = document.body.style.overflow;
+  document.body.style.overflow = "hidden";
+
+  document.body.appendChild(lightbox);
+
+  initializeTelemetryDragging();
+
+  lightboxImage = lightbox.querySelector(".timelapse-lightbox-image");
+  lightboxInfo = lightbox.querySelector(".timelapse-lightbox-info");
+
+  // Mouse wheel zoom
+  lightboxImage.addEventListener("wheel", event => {
+    event.preventDefault();
+
+    zoomLightbox(
+      event.deltaY < 0 ? 1 : -1,
+      event.clientX,
+      event.clientY
+    );
+  }, { passive: false });
+
+  // Double-click to toggle zoom
+  lightboxImage.addEventListener("dblclick", event => {
+    event.preventDefault();
+
+    if (lightboxScale > 1) {
+      resetLightboxZoom();
+    } else {
+      zoomLightboxTo(
+        2,
+        event.clientX,
+        event.clientY
+      );
+    }
+  });
+
+  // Begin dragging
+  lightboxImage.addEventListener("pointerdown", event => {
+    if (lightboxScale <= 1) return;
+
+    event.preventDefault();
+
+    lightboxDragging = true;
+    lightboxDragX = event.clientX - lightboxPanX;
+    lightboxDragY = event.clientY - lightboxPanY;
+
+    lightboxImage.setPointerCapture(event.pointerId);
+
+    applyLightboxTransform();
+  });
+
+  // Drag image
+  lightboxImage.addEventListener("pointermove", event => {
+    if (!lightboxDragging) return;
+
+    lightboxPanX = event.clientX - lightboxDragX;
+    lightboxPanY = event.clientY - lightboxDragY;
+
+    applyLightboxTransform();
+  });
+
+  // Stop dragging
+  function stopDragging() {
+    lightboxDragging = false;
+    applyLightboxTransform();
+  }
+
+  lightboxImage.addEventListener("pointerup", stopDragging);
+  lightboxImage.addEventListener("pointercancel", stopDragging);
+  lightboxImage.addEventListener("lostpointercapture", stopDragging);
+
+  lightbox.querySelector(".timelapse-lightbox-close")
+    .addEventListener("click", closeLightbox);
+
+  lightbox.querySelector(".timelapse-lightbox-prev")
+    .addEventListener("click", () => navigateLightbox(-1));
+
+  lightbox.querySelector(".timelapse-lightbox-next")
+    .addEventListener("click", () => navigateLightbox(1));
+
+  lightbox.addEventListener("click", event => {
+    if (event.target === lightbox) closeLightbox();
+  });
+
+  lightboxOpen = true;
+  document.addEventListener("keydown", handleLightboxKeydown);
+  window.addEventListener("resize", handleLightboxResize);
+  updateLightbox();
+}
+
+function updateLightbox() {
+  if (!lightboxOpen || !dayImages.length) return;
+
+  const frame = dayImages[currentFrame];
+
+  resetLightboxZoom();
+
+  lightboxImage.src = frame.originalUrl;
+
+  updateLightboxTelemetry();
+
+  const capturedAt = new Date(frame.capturedAt);
+
+  lightboxInfo.textContent =
+    `${capturedAt.toLocaleString()} — Frame ${currentFrame + 1} of ${dayImages.length}`;
+
+  lightbox.querySelector(".timelapse-lightbox-prev").disabled =
+    currentFrame === 0;
+
+  lightbox.querySelector(".timelapse-lightbox-next").disabled =
+    currentFrame === dayImages.length - 1;
+}
+
+function navigateLightbox(direction) {
+  const nextFrame = currentFrame + direction;
+
+  if (nextFrame < 0 || nextFrame >= dayImages.length) return;
+
+  currentFrame = nextFrame;
+  updateFrame();
+  updateLightbox();
+}
+
+function closeLightbox() {
+  if (!lightboxOpen) return;
+  telemetryRequestId++;
+  document.body.style.overflow = lightboxPreviousOverflow;
+
+  lightbox.remove();
+  lightbox = null;
+  lightboxImage = null;
+  lightboxInfo = null;
+  lightboxOpen = false;
+
+  document.removeEventListener("keydown", handleLightboxKeydown);
+  window.removeEventListener("resize", handleLightboxResize);
+}
+
+function handleLightboxResize() {
+  if (lightboxOpen) {
+    applyLightboxTransform();
+  }
+}
+
+function handleLightboxKeydown(event) {
+  switch (event.key) {
+    case "Escape":
+      closeLightbox();
+      break;
+
+    case "ArrowLeft":
+      event.preventDefault();
+      navigateLightbox(-1);
+      break;
+
+    case "ArrowRight":
+      event.preventDefault();
+      navigateLightbox(1);
+      break;
+  }
+}
+
+//
+// Lightbox zoom and pan
+//
+function constrainLightboxPan() {
+  if (!lightboxImage) return;
+
+  // offsetWidth/Height are the image dimensions before transforms.
+  const imageWidth = lightboxImage.offsetWidth;
+  const imageHeight = lightboxImage.offsetHeight;
+
+  const scaledWidth = imageWidth * lightboxScale;
+  const scaledHeight = imageHeight * lightboxScale;
+
+  // The lightbox is our visible viewport.
+  const viewportWidth = lightbox.clientWidth;
+  const viewportHeight = lightbox.clientHeight;
+
+  const maxPanX = Math.max(
+    0,
+    (scaledWidth - viewportWidth) / 2
+  );
+
+  const maxPanY = Math.max(
+    0,
+    (scaledHeight - viewportHeight) / 2
+  );
+
+  lightboxPanX = Math.max(
+    -maxPanX,
+    Math.min(maxPanX, lightboxPanX)
+  );
+
+  lightboxPanY = Math.max(
+    -maxPanY,
+    Math.min(maxPanY, lightboxPanY)
+  );
+}
+
+function applyLightboxTransform() {
+  if (!lightboxImage) return;
+
+  constrainLightboxPan();
+
+  lightboxImage.style.transform =
+    `translate(${lightboxPanX}px, ${lightboxPanY}px) scale(${lightboxScale})`;
+
+  lightboxImage.style.cursor =
+    lightboxScale > 1
+      ? (lightboxDragging ? "grabbing" : "grab")
+      : "zoom-in";
+}
+
+function resetLightboxZoom() {
+  lightboxScale = 1;
+  lightboxPanX = 0;
+  lightboxPanY = 0;
+  lightboxDragging = false;
+
+  applyLightboxTransform();
+}
+
+function zoomLightboxTo(newScale, clientX, clientY) {
+  if (!lightboxImage) return;
+
+  const oldScale = lightboxScale;
+
+  newScale = Math.max(1, Math.min(8, newScale));
+
+  if (newScale === oldScale) return;
+
+  const rect = lightboxImage.getBoundingClientRect();
+
+  const centerX =
+    rect.left + rect.width / 2 - lightboxPanX;
+
+  const centerY =
+    rect.top + rect.height / 2 - lightboxPanY;
+
+  const offsetX = clientX - centerX;
+  const offsetY = clientY - centerY;
+
+  const ratio = newScale / oldScale;
+
+  lightboxPanX =
+    offsetX - (offsetX - lightboxPanX) * ratio;
+
+  lightboxPanY =
+    offsetY - (offsetY - lightboxPanY) * ratio;
+
+  lightboxScale = newScale;
+
+  if (lightboxScale === 1) {
+    lightboxPanX = 0;
+    lightboxPanY = 0;
+  }
+
+  applyLightboxTransform();
+}
+
+function zoomLightbox(delta, clientX, clientY) {
+  const newScale =
+    lightboxScale * (delta > 0 ? 1.2 : 1 / 1.2);
+
+  zoomLightboxTo(newScale, clientX, clientY);
+}
+
+function initializeTelemetryDragging() {
+  const panel = lightbox.querySelector(".timelapse-telemetry-panel");
+  const header = panel.querySelector(".timelapse-telemetry-header");
+  const toggle = panel.querySelector(".timelapse-telemetry-toggle");
+  const content = panel.querySelector(".timelapse-telemetry-content");
+
+  // Collapse / expand independently of dragging.
+  toggle.addEventListener("click", () => {
+    const collapsed = content.hidden = !content.hidden;
+
+    toggle.textContent = collapsed ? "+" : "−";
+    toggle.setAttribute(
+      "aria-expanded",
+      String(!collapsed)
+    );
+    toggle.setAttribute(
+      "aria-label",
+      collapsed ? "Expand telemetry" : "Collapse telemetry"
+    );
+  });
+
+  let dragging = false;
+  let pointerId = null;
+  let startX = 0;
+  let startY = 0;
+  let initialLeft = 0;
+  let initialTop = 0;
+
+  header.addEventListener("pointerdown", event => {
+    if (event.button !== 0 || event.target.closest("button")) {
+      return;
+    }
+
+    const panelRect = panel.getBoundingClientRect();
+    const lightboxRect = lightbox.getBoundingClientRect();
+
+    dragging = true;
+    pointerId = event.pointerId;
+
+    startX = event.clientX;
+    startY = event.clientY;
+
+    initialLeft = panelRect.left - lightboxRect.left;
+    initialTop = panelRect.top - lightboxRect.top;
+
+    panel.style.left = `${initialLeft}px`;
+    panel.style.top = `${initialTop}px`;
+    panel.style.right = "auto";
+    panel.style.bottom = "auto";
+
+    header.setPointerCapture(pointerId);
+  });
+
+  header.addEventListener("pointermove", event => {
+    if (!dragging || event.pointerId !== pointerId) return;
+
+    const maxX = Math.max(0, lightbox.clientWidth - panel.offsetWidth);
+    const maxY = Math.max(0, lightbox.clientHeight - panel.offsetHeight);
+
+    const x = initialLeft + event.clientX - startX;
+    const y = initialTop + event.clientY - startY;
+
+    panel.style.left = `${Math.max(0, Math.min(x, maxX))}px`;
+    panel.style.top = `${Math.max(0, Math.min(y, maxY))}px`;
+  });
+
+  function stopDragging(event) {
+    if (event.pointerId !== pointerId) return;
+
+    dragging = false;
+    pointerId = null;
+
+    if (header.hasPointerCapture(event.pointerId)) {
+      header.releasePointerCapture(event.pointerId);
+    }
+  }
+
+  header.addEventListener("pointerup", stopDragging);
+  header.addEventListener("pointercancel", stopDragging);
+  header.addEventListener("lostpointercapture", stopDragging);
+}
+
+//
+// Convert field names into readable labels
+//
+function telemetryLabel(key) {
+  return String(key)
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/[_-]/g, " ")
+    .replace(/\b\w/g, char => char.toUpperCase());
+}
+
+//
+// Format telemetry values based on naming conventions,
+// not a fixed list of telemetry fields.
+//
+function formatTelemetryValue(value, key = "") {
+  if (value === null || value === undefined) {
+    return "—";
+  }
+
+  if (typeof value === "boolean") {
+    return value ? "Yes" : "No";
+  }
+
+  if (typeof value !== "number") {
+    return String(value);
+  }
+
+  const normalizedKey = String(key).toLowerCase();
+
+  const formatNumber = number =>
+    new Intl.NumberFormat(undefined, {
+      maximumFractionDigits: 3,
+    }).format(number);
+
+  // Exposure and other microsecond measurements
+  if (normalizedKey.endsWith("_us")) {
+    if (Math.abs(value) >= 1000000) {
+      return `${formatNumber(value / 1000000)} s`;
+    }
+
+    if (Math.abs(value) >= 1000) {
+      return `${formatNumber(value / 1000)} ms`;
+    }
+
+    return `${formatNumber(value)} µs`;
+  }
+
+  // Milliseconds
+  if (normalizedKey.endsWith("_ms")) {
+    return `${formatNumber(value)} ms`;
+  }
+
+  // Temperature
+  if (normalizedKey.endsWith("_c")) {
+    return `${formatNumber(value)} °C`;
+  }
+
+  if (normalizedKey.endsWith("_f")) {
+    return `${formatNumber(value)} °F`;
+  }
+
+  // Angular measurements
+  if (
+    normalizedKey.endsWith("_altitude") ||
+    normalizedKey.endsWith("_azimuth") ||
+    normalizedKey.endsWith("_degrees") ||
+    normalizedKey.endsWith("_deg")
+  ) {
+    return `${formatNumber(value)}°`;
+  }
+
+  // Explicit percentages
+  if (
+    normalizedKey.endsWith("_percent") ||
+    normalizedKey.endsWith("_pct")
+  ) {
+    return `${formatNumber(value)}%`;
+  }
+
+  // Fractions that conventionally represent 0–100%
+  if (
+    normalizedKey.endsWith("_illumination") &&
+    value >= 0 &&
+    value <= 1
+  ) {
+    return `${formatNumber(value * 100)}%`;
+  }
+
+  return formatNumber(value);
+}
+
+//
+// Render arbitrary JSON recursively
+//
+function renderTelemetryValue(value, key = "", path = "") {
+  const container = document.createElement("div");
+  container.className = "telemetry-value";
+
+  if (value === null || typeof value !== "object") {
+    container.textContent = formatTelemetryValue(value, key);
+    return container;
+  }
+
+  const entries = Array.isArray(value)
+    ? value.map((item, index) => [String(index), item])
+    : Object.entries(value);
+
+  if (entries.length === 0) {
+    container.textContent = "No data";
+    return container;
+  }
+
+  container.classList.add("telemetry-group");
+
+  entries.forEach(([childKey, childValue]) => {
+    const isArray = Array.isArray(value);
+
+    const labelText = isArray
+      ? `Item ${Number(childKey) + 1}`
+      : telemetryLabel(childKey);
+
+    const childPath = `${path}/${childKey}`;
+
+    if (childValue !== null && typeof childValue === "object") {
+      const section = document.createElement("details");
+      section.className = "telemetry-section";
+      section.dataset.telemetryPath = childPath;
+
+      const summary = document.createElement("summary");
+      summary.textContent = labelText;
+
+      section.appendChild(summary);
+      section.appendChild(
+        renderTelemetryValue(childValue, childKey, childPath)
+      );
+
+      container.appendChild(section);
+    } else {
+      const row = document.createElement("div");
+      row.className = "telemetry-row";
+
+      const label = document.createElement("span");
+      label.className = "telemetry-label";
+      label.textContent = labelText;
+
+      const displayValue = document.createElement("span");
+      displayValue.className = "telemetry-data";
+      displayValue.textContent =
+        formatTelemetryValue(childValue, childKey);
+
+      row.appendChild(label);
+      row.appendChild(displayValue);
+      container.appendChild(row);
+    }
+  });
+
+  return container;
+}
+
+let telemetryRequestId = 0;
+//Telemetry
+async function updateLightboxTelemetry() {
+  const requestId = ++telemetryRequestId;
+
+  const content = lightbox?.querySelector(
+    ".timelapse-telemetry-content"
+  );
+
+  if (!content || !dayImages.length) return;
+
+  const frame = dayImages[currentFrame];
+
+  content.textContent = "Loading telemetry...";
+
+  try {
+    const response = await fetch(
+      `/api/timelapse/image/${frame.id}/telemetry`
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    // Ignore stale responses when navigating quickly.
+    if (
+      requestId !== telemetryRequestId ||
+      !lightboxOpen
+    ) {
+      return;
+    }
+
+    content.replaceChildren();
+
+    const metadata = data.metadata;
+
+    if (
+      metadata === null ||
+      metadata === undefined ||
+      (typeof metadata === "object" &&
+        Object.keys(metadata).length === 0)
+    ) {
+      content.textContent =
+        "No telemetry available for this capture.";
+      return;
+    }
+
+    const rendered = renderTelemetryValue(metadata);
+
+    // Restore previously expanded sections.
+    rendered.querySelectorAll(".telemetry-section").forEach(section => {
+      const path = section.dataset.telemetryPath;
+
+      section.open = expandedTelemetrySections.has(path);
+
+      section.addEventListener("toggle", () => {
+        if (section.open) {
+          expandedTelemetrySections.add(path);
+        } else {
+          expandedTelemetrySections.delete(path);
+        }
+      });
+    });
+
+    content.appendChild(rendered);
+
+  } catch (error) {
+    if (
+      requestId !== telemetryRequestId ||
+      !lightboxOpen
+    ) {
+      return;
+    }
+
+    console.error("Telemetry load failed:", error);
+    content.textContent = "Unable to load telemetry.";
+  }
+}

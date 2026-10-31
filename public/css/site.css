@@ -969,3 +969,227 @@ a:focus {
   top: 55.5%;
   transform: translate(-50%, -50%);
 }
+
+/* Full-resolution time-lapse lightbox */
+
+.timelapse-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.96);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.timelapse-lightbox-image {
+  max-width: 90vw;
+  max-height: 85vh;
+  object-fit: contain;
+}
+
+.timelapse-lightbox-close,
+.timelapse-lightbox-prev,
+.timelapse-lightbox-next {
+  position: absolute;
+  background: rgba(30, 30, 30, 0.8);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 12px 18px;
+  font-size: 24px;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.timelapse-lightbox-close {
+  top: 20px;
+  right: 20px;
+}
+
+.timelapse-lightbox-prev {
+  left: 20px;
+}
+
+.timelapse-lightbox-next {
+  right: 20px;
+}
+
+.timelapse-lightbox-info {
+  position: absolute;
+  bottom: 20px;
+  color: white;
+  font-size: 14px;
+  text-align: center;
+}
+
+.timelapse-lightbox button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+@media (max-width: 600px) {
+  .timelapse-lightbox-image {
+    max-width: 100vw;
+    max-height: 75vh;
+  }
+
+  .timelapse-lightbox-prev,
+  .timelapse-lightbox-next {
+    bottom: 60px;
+    top: auto;
+  }
+}
+
+/* Lightbox zoom and pan */
+
+.timelapse-lightbox {
+  overflow: hidden;
+}
+
+.timelapse-lightbox-image {
+  user-select: none;
+  -webkit-user-drag: none;
+  touch-action: none;
+  transform-origin: center center;
+  will-change: transform;
+}
+
+/* Dynamic telemetry panel */
+.timelapse-telemetry-panel {
+  position: absolute;
+  right: 20px;
+  bottom: 60px;
+  width: min(420px, calc(100vw - 40px));
+  max-height: 70vh;
+  overflow-y: auto;
+  background: rgba(18, 20, 25, 0.96);
+  color: #eee;
+  border: 1px solid #444;
+  border-radius: 10px;
+  z-index: 5;
+  font-size: 13px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+  user-select: none;
+}
+
+.timelapse-telemetry-content {
+  padding: 8px 14px 14px;
+  border-top: 1px solid #383838;
+  user-select: text;
+}
+
+.telemetry-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.telemetry-section {
+  margin: 6px 0;
+  padding-left: 10px;
+  border-left: 2px solid #555;
+}
+
+.telemetry-section > summary {
+  cursor: pointer;
+  padding: 8px 4px;
+  font-weight: 600;
+  color: #ddd;
+}
+
+.telemetry-section[open] > summary {
+  color: #fff;
+}
+
+.telemetry-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: 12px;
+  padding: 7px 4px;
+  border-bottom: 1px solid #303030;
+  align-items: start;
+}
+
+.telemetry-label {
+  color: #aaa;
+  overflow-wrap: anywhere;
+}
+
+.telemetry-data {
+  color: #f0f0f0;
+  text-align: right;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 600px) {
+  .timelapse-telemetry-panel {
+    right: 10px;
+    bottom: 110px;
+    width: calc(100vw - 20px);
+    max-height: 45vh;
+  }
+}
+
+.timelapse-telemetry-panel {
+  position: absolute;
+  right: 20px;
+  bottom: 60px;
+  width: min(420px, calc(100vw - 40px));
+  max-height: 70vh;
+  overflow: auto;
+  background: rgba(18, 20, 25, 0.96);
+  color: #eee;
+  border: 1px solid #444;
+  border-radius: 10px;
+  z-index: 5;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
+.timelapse-telemetry-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  border-bottom: 1px solid #383838;
+}
+
+.timelapse-telemetry-header:active {
+  cursor: grabbing;
+}
+
+.timelapse-telemetry-drag-handle {
+  font-size: 20px;
+  color: #999;
+}
+
+.timelapse-telemetry-title {
+  flex: 1;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.timelapse-telemetry-toggle {
+  cursor: pointer;
+  border: 1px solid #555;
+  background: #292d35;
+  color: #eee;
+  border-radius: 5px;
+  width: 28px;
+  height: 28px;
+}
+
+.timelapse-telemetry-content {
+  padding: 12px 14px;
+  overflow-y: auto;
+  max-height: calc(70vh - 60px);
+  user-select: text;
+}
+
+.timelapse-telemetry-content[hidden] {
+  display: none;
+}
